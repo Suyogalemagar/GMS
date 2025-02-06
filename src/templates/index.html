@@ -381,18 +381,21 @@
 
         <div class="row" >
             {% for i in package %}
-            <div class="col-lg-4"><br>
-                <div class="trainer-item">
-                    <div class="down-content">
-                        <span>{{i.titlename}}</span>
-                        <h4>{{i.price}}</h4>
-                        <h4>{{i.packageduration}}</h4>
-                        <p>{{i.description|safe}}</p>
-                        <a class="btn btn-danger px-3" href="/apply-booking/{{i.id}}/">Booking Now</a>
-                    </div>
-                </div>
+    <div class="col-lg-4"><br>
+        <div class="trainer-item">
+            <div class="down-content">
+                <span>{{i.titlename}}</span>
+                <h4>{{i.price}}</h4>
+                <h4>{{i.packageduration}}</h4>
+                <p>{{i.description|safe}}</p>
+                <form method="post" action="/apply-booking/{{i.id}}/">
+                   {% csrf_token %}
+                    <button type="submit" class="btn btn-danger px-3">Booking Now</button>
+                </form>
             </div>
-            {% endfor %}
+        </div>
+    </div>
+{% endfor %}
         </div>
     </div>
 </section>

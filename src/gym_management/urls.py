@@ -34,5 +34,7 @@ urlpatterns = [
     path('user_login/',user_login, name="user_login"),
     path('apply-booking/<int:pid>/', apply_booking, name="apply_booking"),
     path('booking_detail/<int:pid>/', booking_detail, name="booking_detail"),
-
+    path('payment/', payment_view, name='payment_view'),
+    path('payment/success/', payment_success, name='payment_success'),
+    path('payment/failure/', payment_failure, name='payment_failure'),
 ]+static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

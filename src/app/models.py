@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 # Create your models here.
 
@@ -56,3 +57,25 @@ class Paymenthistory(models.Model):
     price = models.CharField(max_length=100, null=True, blank=True)
     status = models.IntegerField(choices=STATUS, default=1)
     creationdate = models.DateTimeField(auto_now_add=True)
+
+
+
+
+# models.py
+# models.py
+from django.db import models
+
+class Payment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    booking=models.ForeignKey(Booking, on_delete=models.CASCADE, null=True, blank=True)
+    transaction_uuid = models.CharField(max_length=255, unique=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.IntegerField(choices=STATUS, default=1)
+    payment_method = models.CharField(max_length=50, default="eSewa")  
+    signature = models.CharField(max_length=255)
+    success_url = models.URLField()
+    failure_url = models.URLField()
+    creationdate = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"Payment {self.transaction_uuid} - {self.user.first_name if self.user else 'Unknown'}"

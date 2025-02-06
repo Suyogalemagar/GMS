@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container my-5">
+        <h2 class="text-center mb-4">Checkout</h2>
+        <div class="row">
+            <!-- Right side: Payment Form -->
+            <div class="col-md-12">
+                <form action="https://rc-epay.esewa.com.np/api/epay/main/v2/form" method="POST" id="payment-form">
+                    <!-- Hidden fields for eSewa -->
+                    <input type="hidden" id="amount" name="amount" value="{{ amount }}" required>
+                    <input type="hidden" id="tax_amount" name="tax_amount" value="0" required>
+                    <input type="hidden" id="total_amount" name="total_amount" value="{{ total_amount }}" required>
+                    <input type="hidden" id="transaction_uuid" name="transaction_uuid" value="{{ transaction_uuid }}" required>
+                    <input type="hidden" id="product_code" name="product_code" value="EPAYTEST" required>
+                    <input type="hidden" id="product_service_charge" name="product_service_charge" value="0" required>
+                    <input type="hidden" id="product_delivery_charge" name="product_delivery_charge" value="0" required>
+                    <input type="hidden" id="success_url" name="success_url" value="{{ success_url }}" required>
+                    <input type="hidden" id="failure_url" name="failure_url" value="{{ failure_url }}" required>
+                    <input type="hidden" id="signed_field_names" name="signed_field_names" value="total_amount,transaction_uuid,product_code" required>
+                    <input type="hidden" id="signature" name="signature" value="{{ signature }}" required>
+
+                    <!-- Full Name -->
+                    <div class="mb-3">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-control" name="full_name" value="{{ user.full_name }}" required />
+                    </div>
+
+                    <!-- Phone Number -->
+                    <div class="mb-3">
+                        <label class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control" name="phone_number" value="{{ user.phone_number }}" required />
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn btn-primary w-100" id="submit-btn">Pay via eSewa</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Form validation before submission
+        document.getElementById('payment-form').addEventListener('submit', function (e) {
+            let fullName = document.querySelector('input[name="full_name"]').value.trim();
+            let phoneNumber = document.querySelector('input[name="phone_number"]').value.trim();
+
+            if (!fullName || !phoneNumber) {
+                e.preventDefault();
+                alert('Please fill in all required fields.');
+            }
+        });
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

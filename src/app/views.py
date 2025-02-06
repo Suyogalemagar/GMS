@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render,redirect
+from django.shortcuts import render,redirect,get_object_or_404
 from django.contrib.auth import authenticate, logout, login
 from .models import *
 from .forms import *
@@ -390,8 +390,112 @@ def random_with_N_digits(n):
 
 @login_required(login_url='/user_login/')
 def apply_booking(request, pid):
-    data = Package.objects.get(id=pid)
-    register = Signup.objects.get(user=request.user)
-    booking = Booking.objects.create(package=data, register=register, bookingnumber=random_with_N_digits(10))
+    package = get_object_or_404(Package, id=pid)
+    register = get_object_or_404(Signup, user=request.user)
+
+    booking = Booking.objects.create(
+        package=package,
+        register=register,
+        bookingnumber=random_with_N_digits(10)
+    )
+
     messages.success(request, 'Booking Applied')
-    return redirect('/')
+    
+    payment_url = reverse('payment_view')
+
+    context = {
+      'action_url': payment_url,
+        'booking_id': booking.id,
+        'amount': package.price,
+    }
+
+    # Return an HttpResponse with a hidden form for POST redirect
+    return render(request, 'hidden_post_form.html', context)
+
+from django.shortcuts import render, redirect
+from django.http import JsonResponse
+from django.urls import reverse
+from django.conf import settings
+from .models import Payment
+import uuid
+import hashlib
+import base64
+import hmac
+# Function to generate the signature for eSewa
+def generate_signature(amount, transaction_uuid, product_code, secret):
+    hash_string = f"total_amount={amount},transaction_uuid={transaction_uuid},product_code={product_code}"
+
+    # Encode both secret and hash_string to bytes using utf-8
+    secret_bytes = secret.encode('utf-8')
+    hash_string_bytes = hash_string.encode('utf-8')
+    
+    hmac_sha256 = hmac.new(secret_bytes, hash_string_bytes, hashlib.sha256)
+    digest = hmac_sha256.digest()
+    signature = base64.b64encode(digest).decode('utf-8')
+    print(signature)
+    # Encode in Base64
+    return signature
+
+def payment_view(request):
+    print(request)
+    if request.method == 'POST':
+        # Get form data
+        amount = float(request.POST.get('amount'))  # Convert to float for calculations
+        full_name = request.POST.get('full_name')
+        phone_number = request.POST.get('phone_number')
+
+        # Generate a unique transaction UUID
+        transaction_uuid = str(uuid.uuid4())
+
+        # Secret key (stored securely in settings)
+        secret = settings.ESEWA_SECRET_KEY
+
+        # Ensure correct total amount
+        tax_amount = 0
+        service_charge = 0
+        delivery_charge = 0
+        total_amount = amount + tax_amount + service_charge + delivery_charge
+
+        # Generate eSewa signature
+        signature = generate_signature(total_amount, transaction_uuid, "EPAYTEST", secret)
+        print(signature)
+        user=User.objects.get(username=request.user)
+        booking=Booking.objects.get(id=request.POST.get("booking_id"))
+        print(booking)
+        print(request.user.id)
+        # Save payment data in the database
+        payment = Payment.objects.create(
+            user=request.user,
+            transaction_uuid=transaction_uuid,
+            amount=total_amount,
+            signature=signature,
+            success_url=request.build_absolute_uri(reverse('payment_success')),
+            failure_url=request.build_absolute_uri(reverse('payment_failure')),
+        )
+        print(payment)
+        # Prepare data to send to the payment form
+        esewa_data = {
+            'amount': payment.amount,
+            'tax_amount': tax_amount,
+            'total_amount': total_amount,
+            'transaction_uuid': payment.transaction_uuid,
+            'product_code': "EPAYTEST",
+            'product_service_charge': service_charge,
+            'product_delivery_charge': delivery_charge,
+            'success_url': payment.success_url,
+            'failure_url': payment.failure_url,
+            'signature': payment.signature,
+            'signed_field_names': "total_amount,transaction_uuid,product_code",
+            'full_name': full_name,
+            'phone_number': phone_number,
+        }
+
+        return render(request, 'payment/payment_form.html', esewa_data)
+    
+    return render(request, 'payment/payment_form.html')
+
+def payment_success(request):
+    return render(request, 'payment/payment_success.html')
+
+def payment_failure(request):
+    return render(request, 'payment/payment_failure.html')

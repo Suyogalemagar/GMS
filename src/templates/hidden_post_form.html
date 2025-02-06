@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Redirecting...</title>
+</head>
+<body onload="document.getElementById('post-form').submit()">
+    <form id="post-form" method="post" action="{{ action_url }}">
+         {% csrf_token %}
+        <input type="hidden" name="booking_id" value="{{ booking_id }}">
+        <input type="hidden" name="amount" value="{{ amount }}">
+    </form>
+    <noscript>
+        <p>Please enable JavaScript to be redirected. You can also submit the form manually below.</p>
+        <form method="post" action="{{ action_url }}">
+            {% csrf_token %}
+            <input type="hidden" name="booking_id" value="{{ booking_id }}">
+            <input type="hidden" name="amount" value="{{ amount }}">
+            <button type="submit">Submit manually</button>
+        </form>
+    </noscript>
+</body>
+</html>
