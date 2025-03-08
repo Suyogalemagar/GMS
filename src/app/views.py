@@ -56,17 +56,7 @@ def user_login(request):
             return redirect('user_login')
     return render(request, 'user_login.html', locals())
 
-def admin_home(request):
-    if not request.user.is_authenticated:
-        return redirect('admin_login')
-    totalcategory = Category.objects.all().count()
-    totalpackagetype = Packagetype.objects.all().count()
-    totalpackage = Package.objects.all().count()
-    totalbooking = Booking.objects.all().count()
-    New = Booking.objects.filter(status="1")
-    Partial = Booking.objects.filter(status="2")
-    Full = Booking.objects.filter(status="3")
-    return render(request, 'admin/admin_home.html', locals())
+
 
 def Logout(request):
     logout(request)
@@ -242,6 +232,47 @@ def addPackage(request):
 def managePackage(request):
     package = Package.objects.all()
     return render(request, 'admin/managePackage.html',locals())
+
+
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+
+from django.shortcuts import render, redirect
+from django.contrib import messages
+
+from django.contrib.auth import authenticate, login
+from django.shortcuts import render, redirect
+from django.contrib import messages
+
+def admin_login(request):
+    if request.method == 'POST':
+        # Get the username and password from the form
+        username = request.POST.get('uname')
+        password = request.POST.get('pwd')
+
+        # Authenticate the user using the Django authentication system
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            # If the user exists and credentials are correct, log the user in
+            login(request, user)
+            return redirect('admin_home')  # Redirect to the admin home page
+        else:
+            # If authentication fails, show an error message
+            messages.error(request, "Invalid username or password.")
+            return redirect('adminlogin')  # Stay on the login page
+
+    return render(request, 'admin_login.html')
+
+
+
+@login_required
+def admin_home(request):
+    # This page is accessible only by logged-in users with the 'is_staff' flag
+    return render(request, 'admin_base.html')
+
 
 @login_required(login_url='/user_login/')
 def booking_history(request):
@@ -499,3 +530,24 @@ def payment_success(request):
 
 def payment_failure(request):
     return render(request, 'payment/payment_failure.html')
+
+from django.contrib.auth import authenticate, login
+from django.shortcuts import render, redirect
+from django.contrib import messages
+
+def trainer_login(request):
+    if request.method == "POST":
+        username = request.POST['username']
+        password = request.POST['password']
+        
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None and user.is_staff:  # Assuming trainers are also staff members
+            login(request, user)
+            messages.success(request, "Trainer Login Successful")
+            return redirect('trainer_dashboard')  # Redirect to the trainer's dashboard or homepage
+        else:
+            messages.error(request, "Invalid username or password")
+            return redirect('trainer_login')
+    
+    return render(request, 'trainer_login.html')

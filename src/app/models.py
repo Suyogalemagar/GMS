@@ -31,6 +31,19 @@ class Signup(models.Model):
     def __str__(self):
         return self.user.first_name
 
+class Regtrainer(models.Model):
+    trainer = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+    mobile = models.CharField(max_length=15, null=True)
+    state = models.CharField(max_length=150, null=True)
+    city = models.CharField(max_length=150, null=True)
+    address = models.CharField(max_length=200, null=True)
+    creationdate = models.DateTimeField(auto_now_add=True)
+    experties = models.CharField(max_length=200, null=True)
+
+    def __str__(self):
+        return self.trainer.first_name  # Corrected reference
+
+
 class Package(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True)
     packagename = models.ForeignKey(Packagetype, on_delete=models.CASCADE, null=True)

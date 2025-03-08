@@ -7,7 +7,6 @@ from django.conf import settings
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', index, name='index'),
-    path('admin_home/', admin_home, name='admin_home'),
     path('logout/',Logout, name="logout"),
     path('user_logout/',user_logout, name="user_logout"),
     path('user_profile/', user_profile, name="user_profile"),
@@ -31,10 +30,16 @@ urlpatterns = [
     path('changePassword', changePassword, name='changePassword'),
     path('editPackage/<int:pid>', editPackage, name='editPackage'),
     path('registration',registration, name="registration"),
-    path('user_login/',user_login, name="user_login"),
+    path('login/',user_login, name="user_login"),
     path('apply-booking/<int:pid>/', apply_booking, name="apply_booking"),
     path('booking_detail/<int:pid>/', booking_detail, name="booking_detail"),
     path('payment/', payment_view, name='payment_view'),
     path('payment/success/', payment_success, name='payment_success'),
     path('payment/failure/', payment_failure, name='payment_failure'),
+    path('adminlogin/', admin_login, name='adminlogin'),
+    path('admin_home/', admin_home, name='admin_home'),
+    
+    path('trainer_login/', trainer_login, name='trainer_login'),
+
+
 ]+static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

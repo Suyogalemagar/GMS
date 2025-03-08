@@ -42,7 +42,7 @@
 <div class="theme-loader">
     <div class="loader-track">
         <div class="preloader-wrapper">
-            <div class="spinner-layer spinner-blue">
+            <div class="spinner-layer spinner-yellow">
                 <div class="circle-clipper left">
                     <div class="circle"></div>
                 </div>
@@ -101,11 +101,10 @@
                     <a class="mobile-menu waves-effect waves-light" id="mobile-collapse" href="#!">
                         <i class="ti-menu"></i>
                     </a>
-
-                    <a href="{% url 'admin_home' %}">
-                        <img class="img-fluid" src="{% static 'assets1/images/logo.png' %}" alt="Theme-Logo"
-                             style="width:85%">
+                    <a href="{% url 'admin_home' %}" class="gym-logo">
+                        <h2 style="font-size: 18px;">GYM Management System</h2>
                     </a>
+                    
                     <a class="mobile-options waves-effect waves-light">
                         <i class="ti-more"></i>
                     </a>
@@ -343,6 +342,26 @@
         </div>
     </div>
 </div>
+<style>
+    .gym-logo {
+        text-decoration: none; /* Remove underline */
+        color: #333; /* Dark color for the text */
+    }
+
+    .gym-logo h1 {
+        font-size: 30px; /* Adjust font size */
+        font-family: 'Arial', sans-serif; /* Stylish font */
+        font-weight: bold; /* Make the text bold */
+        text-transform: uppercase; /* Uppercase letters */
+        letter-spacing: 2px; /* Space out the letters slightly */
+        text-align: center; /* Center align the text */
+        transition: color 0.3s ease; /* Smooth color transition */
+    }
+
+    .gym-logo h1:hover {
+        color: #ff6600; /* Change color on hover */
+    }
+</style>
 
 {% for i in messages %}
 <script>

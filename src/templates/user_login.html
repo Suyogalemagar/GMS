@@ -1,143 +1,90 @@
+{% extends 'header.html' %}
 {% load static %}
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <link href="https://fonts.googleapis.com/css?family=Poppins:100,100i,200,200i,300,300i,400,400i,500,500i,600,600i,700,700i,800,800i,900,900i&display=swap" rel="stylesheet">
 
-    <title>Gym Management System</title>
+{% block main_content %}
+<div class="container bg-white rounded shadow p-4">
 
-    <!-- Additional CSS Files -->
-    <link rel="stylesheet" type="text/css" href="{% static 'assets/css/bootstrap.min.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'assets/css/font-awesome.css' %}">
-    <link rel="stylesheet" href="{% static 'assets/css/templatemo-training-studio.css' %}">
+    <div class="d-flex justify-content-center gap-3 bg-warning text-white py-2 text-lg font-weight-bold rounded-top">
+        <a href="/login" class="text-white text-decoration-none px-3 py-2 rounded member-link {% if request.path == '/login' %}active-link{% endif %}">Member Login</a>
+        <a href="/trainer_login" class="text-white text-decoration-none px-3 py-2 rounded trainer-link {% if request.path == '/trainer_login' %}active-link{% endif %}">Trainer Login</a>
+        <a href="/adminlogin" class="text-white text-decoration-none px-3 py-2 rounded admin-member-link {% if request.path == '/admin_login' %}active-link{% endif %}">Admin Login</a>
+        
 
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-        }
+    </div>
 
-        .login-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            background-color: #f4f4f4;
-        }
-
-        .login-box {
-            display: flex;
-            max-width: 900px;
-            width: 100%;
-            background: #fff;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .login-image {
-            width: 50%;
-            background-image: url('{% static "assets/images/adminlogin.jpg" %}');
-            background-size: cover;
-            background-position: center;
-            position: relative;
-        }
-
-        .login-image::after {
-            content: "Gym Management System";
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            font-size: 24px;
-            font-weight: bold;
-            color: #fff;
-            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-        }
-
-        .login-form {
-            width: 50%;
-            padding: 40px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .login-form h3 {
-            font-size: 28px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            color: #333;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-control {
-            height: 45px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            padding: 10px;
-        }
-
-        .btn-login {
-            background-color: #f9c922;
-            border: none;
-            color: #fff;
-            font-size: 16px;
-            font-weight: bold;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-
-        .btn-login:hover {
-            background-color: #e8b817;
-        }
-
-        .register-link {
-            margin-top: 10px;
-            font-size: 14px;
-            color: #333;
-        }
-
-        .register-link a {
-            color: #f9c922;
-            text-decoration: none;
-            font-weight: bold;
-        }
-    </style>
-</head>
-
-<body>
-
-<div class="login-container">
-    <div class="login-box">
-        <div class="login-image"></div>
-        <div class="login-form">
-            <h3>Sign In</h3>
-            <form method="post">
-                {% csrf_token %}
-                <div class="form-group">
-                    <label for="email">Email:</label>
-                    <input type="email" id="email" name="email" class="form-control" placeholder="Enter Email" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">Password:</label>
-                    <input type="password" id="password" name="password" class="form-control" placeholder="Enter Password" required>
-                </div>
-                <button type="submit" class="btn-login">Sign In</button>
-                <p class="register-link">Don't have an account? <a href="{% url 'registration' %}">Register Here</a></p>
-            </form>
+    <div class="d-flex align-items-center justify-content-center py-5">
+        <div class="d-flex flex-wrap w-75 bg-white shadow rounded overflow-hidden">
+            <div class="w-50 d-none d-md-block" style="background: url('{% static "assets/images/adminlogin.jpg" %}') center/cover no-repeat;"></div>
+            <div class="w-50 p-4 d-flex flex-column justify-content-center">
+                <h3 class="text-center text-dark mb-3">Sign In</h3>
+                <form method="post" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email:</label>
+                        <input type="email" id="email" name="email" class="form-control" placeholder="Enter Email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password:</label>
+                        <input type="password" id="password" name="password" class="form-control" placeholder="Enter Password" required>
+                    </div>
+                    <button type="submit" class="btn btn-warning w-100">Sign In</button>
+                    <p class="text-center text-muted mt-3">Don't have an account? <a href="{% url 'registration' %}" class="text-warning">Register Here</a></p>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 
-</body>
-</html>
+<style>
+    .member-link:hover, .active-link {
+        background-color: #ff6600;  /* Active and hover color */
+        transition: background-color 0.3s ease;
+    }
+
+    /* Additional Styling to Remove Space */
+    .section {
+        margin-top: 0 !important;  /* Remove the extra margin above the form */
+    }
+
+    .member-form {
+        margin-top: 0; /* Remove space in the form section */
+    }
+    .admin-member-link:hover, .active-link {
+        background-color: #ff6600;  /* Active and hover color */
+        transition: background-color 0.3s ease;
+    }
+
+    /* Additional Styling to Remove Space */
+    .section {
+        margin-top: 0 !important;  /* Remove the extra margin above the form */
+    }
+
+    .admin-form {
+        margin-top: 0; /* Remove space in the form section */
+    }
+</style>
+
+<script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
+<!-- jQuery -->
+<script src="{% static 'assets/js/jquery-2.1.0.min.js' %}"></script>
+
+<!-- Bootstrap -->
+<script src="{% static 'assets/js/popper.js' %}"></script>
+<script src="{% static 'assets/js/bootstrap.min.js' %}"></script>
+
+<!-- Plugins -->
+<script src="{% static 'assets/js/scrollreveal.min.js' %}"></script>
+<script src="{% static 'assets/js/waypoints.min.js' %}"></script>
+<script src="{% static 'assets/js/jquery.counterup.min.js' %}"></script>
+<script src="{% static 'assets/js/imgfix.min.js' %}"></script>
+<script src="{% static 'assets/js/mixitup.js' %}"></script>
+<script src="{% static 'assets/js/accordions.js' %}"></script>
+
+<!-- Global Init -->
+<script src="{% static 'assets/js/custom.js' %}"></script>
+{% for i in messages %}
+<script>
+alert('{{i}}');
+</script>
+{% endfor %}
+{% endblock %}
