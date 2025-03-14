@@ -141,17 +141,17 @@ def deleteCategory(request, pid):
     return redirect('manageCategory')
 
 @login_required(login_url='/admin_login/')
-def reg_user(request):
+def reg_member(request):
     data = Signup.objects.all()
     d = {'data': data}
-    return render(request, "admin/reg_user.html", locals())
+    return render(request, "admin/reg_member.html", locals())
 
 @login_required(login_url='/admin_login/')
 def delete_user(request, pid):
     data = Signup.objects.get(id=pid)
     data.delete()
     messages.success(request, "Delete Successful")
-    return redirect('reg_user')
+    return redirect('reg_member')
 
 def managePackageType(request):
     if not request.user.is_authenticated:
@@ -551,3 +551,75 @@ def trainer_login(request):
             return redirect('trainer_login')
     
     return render(request, 'trainer_login.html')
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+@csrf_exempt
+def verify_user(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            user_id = data.get("user_id")
+            user = Signup.objects.get(id=user_id)
+            user.is_verified = True
+            user.save()
+            return JsonResponse({"success": True})
+        except Signup.DoesNotExist:
+            return JsonResponse({"success": False, "error": "User not found"})
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)})
+    return JsonResponse({"success": False, "error": "Invalid request"})
+def get_users(request):
+    if request.method == "GET":
+        users = Signup.objects.select_related('user').all()
+        user_list = [
+            {
+                "id": user.id,
+                "first_name": user.user.first_name,
+                "email": user.user.username,
+                "mobile": user.mobile,
+                "address": user.address,
+                "is_verified": user.is_verified
+            }
+            for user in users
+        ]
+        return JsonResponse(user_list, safe=False)
+import json
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from .models import Signup
+
+@csrf_exempt  # Allow AJAX POST without CSRF token (only for testing, use proper CSRF handling in production)
+def verify_user(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            user_id = data.get("user_id")
+            user = Signup.objects.get(id=user_id)
+            user.is_verified = True
+            user.save()
+            return JsonResponse({"success": True})
+        except Signup.DoesNotExist:
+            return JsonResponse({"success": False, "error": "User not found"})
+    return JsonResponse({"success": False, "error": "Invalid request"})
+
+
+# views.py
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.models import User
+
+@csrf_exempt
+def delete_user(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            user_id = data.get("user_id")
+            user = User.objects.get(id=user_id)
+            user.delete()
+            return JsonResponse({"success": True})
+        except User.DoesNotExist:
+            return JsonResponse({"success": False, "error": "User not found"})
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)})

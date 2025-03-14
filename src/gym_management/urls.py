@@ -18,7 +18,7 @@ urlpatterns = [
     path('managePackageType/', managePackageType, name='managePackageType'),
     path('editPackageType/<int:pid>', editPackageType, name='editPackageType'),
     path('deletePackageType/<int:pid>', deletePackageType, name='deletePackageType'),
-    path('reg_user/', reg_user, name="reg_user"),
+    path('reg_member/', reg_member, name="reg_member"),
     path('delete_user/<int:pid>', delete_user, name="delete_user"),
     path('deleteBooking/<int:pid>', deleteBooking, name='deleteBooking'),
     path('addPackage', addPackage, name='addPackage'),
@@ -38,7 +38,8 @@ urlpatterns = [
     path('payment/failure/', payment_failure, name='payment_failure'),
     path('adminlogin/', admin_login, name='adminlogin'),
     path('admin_home/', admin_home, name='admin_home'),
-    
+    path('admin/verify-user/', verify_user, name='verify_user'),
+
     path('trainer_login/', trainer_login, name='trainer_login'),
 
 

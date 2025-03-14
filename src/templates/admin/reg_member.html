@@ -1,0 +1,210 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+{% block main %}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+<style>
+  .password {
+    display: none;
+  }
+  .text {
+    display: block;
+  }
+  .table-responsive {
+    font-size: 13px;
+  }
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .table th, .table td {
+    padding: 12px;
+    text-align: left;
+    border: 1px solid #ddd;
+  }
+  .table th {
+    background-color: #f9c922;
+    color: #fff;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+  .table tbody tr:nth-child(odd) {
+    background-color: #f9f9f9;
+  }
+  .table tbody tr:hover {
+    background-color: #e8e8e8;
+  }
+  .btn-danger, .btn-success {
+    padding: 6px 12px;
+    font-size: 13px;
+    border-radius: 5px;
+  }
+  .btn-danger {
+    background-color: #f44336;
+    border: none;
+    color: white;
+  }
+  .btn-danger:hover {
+    background-color: #e53935;
+  }
+  .btn-success {
+    background-color: #28a745;
+    border: none;
+    color: white;
+  }
+  .btn-success:hover {
+    background-color: #218838;
+  }
+  .verified-checkbox {
+    transform: scale(1.4);
+    margin-right: 10px;
+  }
+</style>
+
+<!-- Page-header start -->
+<div class="page-header">
+    <div class="page-block">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="page-header-title">
+                    <h5 class="m-b-10">Registered Members</h5>
+                    <p class="m-b-0">Welcome to Gym Management System</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <ul class="breadcrumb-title">
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'admin_home' %}"> <i class="fa fa-home"></i> </a>
+                    </li>
+                    <li class="breadcrumb-item"><a href="">Registered Members</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Page-header end -->
+
+<div class="pcoded-inner-content">
+    <div class="main-body">
+        <div class="page-wrapper">
+            <div class="page-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-block">
+                                <div class="card-header">
+                                    <h5> Registered Members</h5>
+                                </div>
+                                <div class="card-block table-border-style">
+                                    <div class="table-responsive">
+                                        <table class="table">
+                                            <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Name</th>
+                                                <th>Email</th>
+                                                <th>Mobile</th>
+                                                <th>Address</th>
+                                                <th>Verified</th>
+                                                <th>Action</th>
+                                            </tr>
+                                            </thead>
+
+                                            <tbody>
+                                            {% for i in data %}
+                                            <tr>
+                                                <th scope="row">{{ forloop.counter }}</th>
+                                                <td>{{ i.user.first_name }} {{ i.user.last_name }}</td>
+                                                <td>
+                                                    <span id="email-{{ forloop.counter }}" class="password">{{ i.user.username }}</span>
+                                                    <button type="button" class="btn btn-success" id="email-btn-{{ forloop.counter }}" onclick="togglePassword('email-{{ forloop.counter }}', this.id)">
+                                                        <i class="fa fa-eye"></i>
+                                                    </button>
+                                                </td>
+                                                <td>
+                                                    <span id="mobile-{{ forloop.counter }}" class="password">{{ i.mobile }}</span>
+                                                    <button type="button" class="btn btn-success" id="mobile-btn-{{ forloop.counter }}" onclick="togglePassword('mobile-{{ forloop.counter }}', this.id)">
+                                                        <i class="fa fa-eye"></i>
+                                                    </button>
+                                                </td>
+                                                <td>{{ i.address }}</td>
+                                                <td>
+                                                    <!-- Verification Checkbox -->
+                                                    <input type="checkbox" class="verified-checkbox" data-user-id="{{ i.id }}" {% if i.is_verified %}checked disabled{% endif %}>
+                                                </td>
+                                                <td>
+                                                    <a href="{% url 'delete_user' i.id %}" onclick="return confirm('Are you sure you want to delete?')" class="btn btn-danger">Delete</a>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="styleSelector"></div>
+</div>
+
+<!-- JavaScript for verification and password toggle -->
+<script>
+function togglePassword(element_id, btnId){
+    var elementData = document.getElementById(element_id);
+    var elementBtn = document.getElementById(btnId);
+
+    if (elementData.classList.contains("password")) {
+        elementData.classList.remove("password");
+        elementData.classList.add("text");
+        elementBtn.children[0].classList.add("fa-eye-slash");
+        elementBtn.children[0].classList.remove("fa-eye");
+    } else {
+        elementData.classList.remove("text");
+        elementData.classList.add("password");
+        elementBtn.children[0].classList.remove("fa-eye-slash");
+        elementBtn.children[0].classList.add("fa-eye");
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".verified-checkbox").forEach(checkbox => {
+        checkbox.addEventListener("change", function () {
+            const userId = this.dataset.userId;
+
+            fetch("{% url 'verify_user' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value // Get the CSRF token from the page
+                },
+                body: JSON.stringify({ user_id: userId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("User verified successfully!");
+                    this.disabled = true; // Disable checkbox after verification
+                } else {
+                    alert("Error verifying user: " + (data.error || 'Unknown error'));
+                    this.checked = false; // Uncheck if verification fails
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Something went wrong. Please check the console for more details.");
+                this.checked = false;
+            });
+        });
+    });
+});
+</script>
+
+{% endblock %}
