@@ -146,6 +146,8 @@ def reg_member(request):
     d = {'data': data}
     return render(request, "admin/reg_member.html", locals())
 
+
+
 @login_required(login_url='/admin_login/')
 def delete_user(request, pid):
     data = Signup.objects.get(id=pid)
@@ -545,7 +547,7 @@ def trainer_login(request):
         if user is not None and user.is_staff:  # Assuming trainers are also staff members
             login(request, user)
             messages.success(request, "Trainer Login Successful")
-            return redirect('trainer_dashboard')  # Redirect to the trainer's dashboard or homepage
+            return redirect('trainer_page')  # Redirect to the trainer's dashboard or homepage
         else:
             messages.error(request, "Invalid username or password")
             return redirect('trainer_login')
@@ -623,3 +625,36 @@ def delete_user(request):
             return JsonResponse({"success": False, "error": "User not found"})
         except Exception as e:
             return JsonResponse({"success": False, "error": str(e)})
+# views.py
+from django.shortcuts import render, redirect
+from .models import Trainer
+from django.http import JsonResponse
+
+def trainer_registration(request):
+    if request.method == "POST":
+        fname = request.POST['firstname']
+        lname = request.POST['lastname']
+        email = request.POST['email']
+        pwd = request.POST['password']
+        mobile = request.POST['mobile']
+        address = request.POST['address']
+
+        user = User.objects.create_user(first_name=fname, last_name=lname, email=email, password=pwd, username=email)
+        Signup.objects.create(user=user, mobile=mobile,address=address)
+        messages.success(request, "Register Successful")
+        return redirect('trainer_login')
+    return render(request, 'trainer_reg.html', locals())
+
+
+def trainer_list(request):
+    trainers = Trainer.objects.all()
+    return render(request, 'trainer_list.html', {'trainers': trainers})
+
+# Optional: You can add a delete functionality for trainers as well
+def delete_trainer(request, trainer_id):
+    try:
+        trainer = Trainer.objects.get(id=trainer_id)
+        trainer.delete()
+        return JsonResponse({"success": True})
+    except Trainer.DoesNotExist:
+        return JsonResponse({"success": False, "error": "Trainer not found"})

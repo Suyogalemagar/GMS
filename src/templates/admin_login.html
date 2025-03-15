@@ -2,13 +2,12 @@
 {% load static %}
 
 {% block main_content %}
-
 <div class="container bg-white rounded shadow p-4">
 
     <div class="d-flex justify-content-center gap-3 bg-warning text-white py-2 text-lg font-weight-bold rounded-top">
         <a href="/login" class="text-white text-decoration-none px-3 py-2 rounded member-link {% if request.path == '/login' %}active-link{% endif %}">Member Login</a>
         <a href="/trainer_login" class="text-white text-decoration-none px-3 py-2 rounded trainer-link {% if request.path == '/trainer_login' %}active-link{% endif %}">Trainer Login</a>
-        <a href="/adminlogin" class="text-white text-decoration-none px-3 py-2 rounded admin-member-link {% if request.path == '/admin_login' %}active-link{% endif %}">Admin Login</a>
+        <a href="/adminlogin" class="text-white text-decoration-none px-3 py-2 rounded admin-member-link {% if request.path == '/adminlogin' %}active-link{% endif %}">Admin Login</a>
     </div>
 
     <section class="section" id="admin">
@@ -27,17 +26,17 @@
                             <div class="row">
                                 <div class="col-md-12 col-sm-12">
                                     <fieldset>
-                                        <input type="text" name="uname" placeholder="Enter Username" required>
+                                        <input type="text" name="uname" class="form-control" placeholder="Enter Username" required>
                                     </fieldset>
                                 </div>
                                 <div class="col-md-12 col-sm-12">
                                     <fieldset>
-                                        <input type="password" name="pwd" placeholder="Enter Password" required>
+                                        <input type="password" name="pwd" class="form-control" placeholder="Enter Password" required>
                                     </fieldset>
                                 </div>
                                 <div class="col-lg-12">
                                     <fieldset>
-                                        <button type="submit" class="main-button">Submit</button>
+                                        <button type="submit" class="btn btn-warning w-100">Submit</button>
                                     </fieldset>
                                 </div>
                             </div>
@@ -48,46 +47,48 @@
         </div>
     </section>   
 
-    <!-- Adding the CSS for hover effect -->
-    <style>
-        .admin-member-link:hover, .active-link {
-            background-color: #ff6600;  /* Active and hover color */
-            transition: background-color 0.3s ease;
-        }
+</div>
 
-        /* Additional Styling to Remove Space */
-        .section {
-            margin-top: 0 !important;  /* Remove the extra margin above the form */
-        }
+<!-- Adding the CSS for hover effect -->
+<style>
+    .member-link:hover, .trainer-link:hover, .admin-member-link:hover, .active-link {
+        background-color: #ff6600;  /* Active and hover color */
+        transition: background-color 0.3s ease;
+    }
 
-        .admin-form {
-            margin-top: 0; /* Remove space in the form section */
-        }
-    </style>
+    /* Additional Styling to Remove Space */
+    .section {
+        margin-top: 0 !important;  /* Remove the extra margin above the form */
+    }
 
-    <script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
-    <!-- jQuery -->
-    <script src="{% static 'assets/js/jquery-2.1.0.min.js' %}"></script>
+    .admin-form {
+        margin-top: 0; /* Remove space in the form section */
+    }
+</style>
 
-    <!-- Bootstrap -->
-    <script src="{% static 'assets/js/popper.js' %}"></script>
-    <script src="{% static 'assets/js/bootstrap.min.js' %}"></script>
+<script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
+<!-- jQuery -->
+<script src="{% static 'assets/js/jquery-2.1.0.min.js' %}"></script>
 
-    <!-- Plugins -->
-    <script src="{% static 'assets/js/scrollreveal.min.js' %}"></script>
-    <script src="{% static 'assets/js/waypoints.min.js' %}"></script>
-    <script src="{% static 'assets/js/jquery.counterup.min.js' %}"></script>
-    <script src="{% static 'assets/js/imgfix.min.js' %}"></script>
-    <script src="{% static 'assets/js/mixitup.js' %}"></script>
-    <script src="{% static 'assets/js/accordions.js' %}"></script>
+<!-- Bootstrap -->
+<script src="{% static 'assets/js/popper.js' %}"></script>
+<script src="{% static 'assets/js/bootstrap.min.js' %}"></script>
 
-    <!-- Global Init -->
-    <script src="{% static 'assets/js/custom.js' %}"></script>
-    
-    {% for i in messages %}
-    <script>
+<!-- Plugins -->
+<script src="{% static 'assets/js/scrollreveal.min.js' %}"></script>
+<script src="{% static 'assets/js/waypoints.min.js' %}"></script>
+<script src="{% static 'assets/js/jquery.counterup.min.js' %}"></script>
+<script src="{% static 'assets/js/imgfix.min.js' %}"></script>
+<script src="{% static 'assets/js/mixitup.js' %}"></script>
+<script src="{% static 'assets/js/accordions.js' %}"></script>
+
+<!-- Global Init -->
+<script src="{% static 'assets/js/custom.js' %}"></script>
+
+{% for i in messages %}
+<script>
     alert('{{ i }}');
-    </script>
-    {% endfor %}
+</script>
+{% endfor %}
 
 {% endblock %}
