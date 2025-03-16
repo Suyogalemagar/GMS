@@ -147,13 +147,25 @@ def reg_member(request):
     return render(request, "admin/reg_member.html", locals())
 
 
-
 @login_required(login_url='/admin_login/')
 def delete_user(request, pid):
     data = Signup.objects.get(id=pid)
     data.delete()
     messages.success(request, "Delete Successful")
     return redirect('reg_member')
+
+@login_required(login_url='/admin_login/')
+def reg_trainer(request):
+    data = Signup.objects.all()
+    d = {'data': data}
+    return render(request, "admin/reg_trainer.html", locals())
+
+@login_required(login_url='/admin_login/')
+def delete_user(request, pid):
+    data = Signup.objects.get(id=pid)
+    data.delete()
+    messages.success(request, "Delete Successful")
+    return redirect('reg_trainer')
 
 def managePackageType(request):
     if not request.user.is_authenticated:
@@ -632,23 +644,44 @@ from django.http import JsonResponse
 
 def trainer_registration(request):
     if request.method == "POST":
-        fname = request.POST['firstname']
-        lname = request.POST['lastname']
-        email = request.POST['email']
-        pwd = request.POST['password']
-        mobile = request.POST['mobile']
-        address = request.POST['address']
+        first_name = request.POST.get('first_name', '')  
+        last_name = request.POST.get('last_name', '')
+        email = request.POST.get('email', '')
+        phone = request.POST.get('phone', '')
+        address = request.POST.get('address', '')
+        experience = request.POST.get('experience', '')
+        password = request.POST.get('password', '')
 
-        user = User.objects.create_user(first_name=fname, last_name=lname, email=email, password=pwd, username=email)
-        Signup.objects.create(user=user, mobile=mobile,address=address)
-        messages.success(request, "Register Successful")
+        if not first_name or not last_name or not email or not password:
+            messages.error(request, "All fields are required!")
+            return render(request, 'trainer_reg.html', locals())
+
+        # Check if user already exists
+        if User.objects.filter(username=email).exists():
+            messages.error(request, "Email already registered. Try logging in.")
+            return render(request, 'trainer_reg.html', locals())
+
+        # Create User
+        user = User.objects.create_user(
+            first_name=first_name, 
+            last_name=last_name, 
+            email=email, 
+            password=password, 
+            username=email  # Username is email
+        )
+
+        # Create Signup record (if applicable)
+        Signup.objects.create(user=user, mobile=phone, address=address)
+
+        messages.success(request, "Registration Successful!! Please login.")
         return redirect('trainer_login')
-    return render(request, 'trainer_reg.html', locals())
+
+    return render(request, 'trainer_reg.html')
 
 
 def trainer_list(request):
     trainers = Trainer.objects.all()
-    return render(request, 'trainer_list.html', {'trainers': trainers})
+    return render(request, 'reg_trainer.html', {'trainers': trainers})
 
 # Optional: You can add a delete functionality for trainers as well
 def delete_trainer(request, trainer_id):
