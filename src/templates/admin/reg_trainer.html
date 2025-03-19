@@ -44,6 +44,11 @@
   .btn-danger:hover {
     background-color: #e53935;
   }
+  .verified-button {
+    padding: 5px 10px;
+    font-size: 12px;
+    border-radius: 5px;
+  }
 </style>
 
 <!-- Page-header start -->
@@ -85,6 +90,7 @@
                                         <table class="table table-bordered">
                                             <thead>
                                                 <tr>
+                                                    <th><input type="checkbox" id="select-all" onclick="toggleSelectAll()"></th> <!-- Select all checkbox -->
                                                     <th>#</th>
                                                     <th>First Name</th>
                                                     <th>Last Name</th>
@@ -98,13 +104,22 @@
                                             <tbody>
                                                 {% for trainer in trainers %}
                                                 <tr>
+                                                    <td><input type="checkbox" class="select-trainer" data-trainer-id="{{ trainer.id }}"></td> <!-- Individual trainer checkbox -->
                                                     <th scope="row">{{ forloop.counter }}</th>
-                                                    <td>{{ trainer.first_name }}</td>
-                                                    <td>{{ trainer.last_name }}</td>
-                                                    <td>{{ trainer.email }}</td>
+                                                    <td>{{ trainer.user.first_name }}</td>
+                                                    <td>{{ trainer.user.last_name }}</td>
+                                                    <td>{{ trainer.user.email }}</td>
                                                     <td>{{ trainer.phone }}</td>
                                                     <td>{{ trainer.experience }}</td>
-                                                    <td>{{ trainer.is_verified|yesno:"Yes,No" }}</td>
+                                                    <td>
+                                                        <!-- Verification buttons -->
+                                                        {% if trainer.is_verified %}
+                                                            <span class="text-success">Yes</span>
+                                                        {% else %}
+                                                            <a href="{% url 'verify_trainer'  %}" class="btn btn-success verified-button">Yes</a>
+                                                            <a href="{% url 'verify_trainer'  %}" class="btn btn-danger verified-button">No</a>
+                                                        {% endif %}
+                                                    </td>
                                                     <td>
                                                         <a href="{% url 'delete_trainer' trainer.id %}" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete?')">Delete</a>
                                                     </td>
@@ -123,5 +138,17 @@
     </div>
     <div id="styleSelector"></div>
 </div>
+
+<!-- JavaScript for verification and select-all functionality -->
+<script>
+// Select all trainers checkbox functionality
+function toggleSelectAll() {
+    var selectAll = document.getElementById('select-all');
+    var trainerCheckboxes = document.querySelectorAll('.select-trainer');
+    trainerCheckboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
+}
+</script>
 
 {% endblock %}

@@ -2,20 +2,19 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 
-# Create your models here.
+
 class Trainer(models.Model):
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
-    email = models.EmailField(unique=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True) 
     phone = models.CharField(max_length=15)
     address = models.TextField()
-    experience = models.IntegerField(help_text="Years of experience")
-    is_verified = models.BooleanField(default=False)  # to track if the trainer is verified
+    experience = models.PositiveIntegerField(null=True, blank=True)  
+    is_verified = models.BooleanField(default=False) 
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name} ({self.email})"
-    
+        return self.user.username if self.user else "No User"
+
+# Category Model
 class Category(models.Model):
     categoryname = models.CharField(max_length=200, null=True)
     status = models.CharField(max_length=300, null=True)
@@ -24,6 +23,7 @@ class Category(models.Model):
     def __str__(self):
         return self.categoryname
 
+# Package Type Model
 class Packagetype(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True)
     packagename = models.CharField(max_length=200, null=True)
@@ -32,8 +32,9 @@ class Packagetype(models.Model):
     def __str__(self):
         return self.packagename
 
+# Signup Model: Stores additional user information
 class Signup(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True)  # One-to-One link with User
     mobile = models.CharField(max_length=15, null=True)
     state = models.CharField(max_length=150, null=True)
     city = models.CharField(max_length=150, null=True)
@@ -41,33 +42,22 @@ class Signup(models.Model):
     creationdate = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.user.first_name
+        return self.user.username  
 
-class Regtrainer(models.Model):
-    trainer = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
-    mobile = models.CharField(max_length=15, null=True)
-    state = models.CharField(max_length=150, null=True)
-    city = models.CharField(max_length=150, null=True)
-    address = models.CharField(max_length=200, null=True)
-    creationdate = models.DateTimeField(auto_now_add=True)
-    experties = models.CharField(max_length=200, null=True)
-
-    def __str__(self):
-        return self.trainer.first_name  # Corrected reference
-
-
+# Package Model
 class Package(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True)
     packagename = models.ForeignKey(Packagetype, on_delete=models.CASCADE, null=True)
     titlename = models.CharField(max_length=200, null=True)
     packageduration = models.CharField(max_length=50, null=True)
-    price = models.CharField(max_length=200, null=True)
-    description = models.CharField(max_length=200, null=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2, null=True)  
+    description = models.TextField(null=True)
     creationdate = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.titlename
 
+# Booking Model
 STATUS = ((1, "Not Updated Yet"), (2, "Partial Payment"), (3, 'Full Payment'))
 class Booking(models.Model):
     package = models.ForeignKey(Package, on_delete=models.CASCADE, null=True, blank=True)
@@ -76,23 +66,18 @@ class Booking(models.Model):
     status = models.IntegerField(choices=STATUS, default=1)
     creationdate = models.DateTimeField(auto_now_add=True)
 
+# Payment History Model
 class Paymenthistory(models.Model):
     user = models.ForeignKey(Signup, on_delete=models.CASCADE, null=True, blank=True)
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE, null=True, blank=True)
-    price = models.CharField(max_length=100, null=True, blank=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     status = models.IntegerField(choices=STATUS, default=1)
     creationdate = models.DateTimeField(auto_now_add=True)
 
-
-
-
-# models.py
-# models.py
-from django.db import models
-
+# Payment Model
 class Payment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
-    booking=models.ForeignKey(Booking, on_delete=models.CASCADE, null=True, blank=True)
+    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, null=True, blank=True)
     transaction_uuid = models.CharField(max_length=255, unique=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.IntegerField(choices=STATUS, default=1)
@@ -103,4 +88,4 @@ class Payment(models.Model):
     creationdate = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
-        return f"Payment {self.transaction_uuid} - {self.user.first_name if self.user else 'Unknown'}"
+        return f"Payment {self.transaction_uuid} - {self.user.username if self.user else 'Unknown'}"

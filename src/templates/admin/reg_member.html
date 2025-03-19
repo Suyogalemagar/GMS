@@ -59,9 +59,10 @@
   .btn-success:hover {
     background-color: #218838;
   }
-  .verified-checkbox {
-    transform: scale(1.4);
-    margin-right: 10px;
+  .verified-button {
+    padding: 5px 10px;
+    font-size: 12px;
+    border-radius: 5px;
   }
 </style>
 
@@ -104,6 +105,7 @@
                                         <table class="table">
                                             <thead>
                                             <tr>
+                                                <th><input type="checkbox" id="select-all" onclick="toggleSelectAll()"></th> <!-- Select all checkbox -->
                                                 <th>#</th>
                                                 <th>Name</th>
                                                 <th>Email</th>
@@ -117,6 +119,7 @@
                                             <tbody>
                                             {% for i in data %}
                                             <tr>
+                                                <td><input type="checkbox" class="select-member" data-member-id="{{ i.id }}"></td> <!-- Individual member checkbox -->
                                                 <th scope="row">{{ forloop.counter }}</th>
                                                 <td>{{ i.user.first_name }} {{ i.user.last_name }}</td>
                                                 <td>
@@ -133,11 +136,16 @@
                                                 </td>
                                                 <td>{{ i.address }}</td>
                                                 <td>
-                                                    <!-- Verification Checkbox -->
-                                                    <input type="checkbox" class="verified-checkbox" data-user-id="{{ i.id }}" {% if i.is_verified %}checked disabled{% endif %}>
+                                                    <!-- Verification with Yes/No buttons -->
+                                                    {% if i.is_verified %}
+                                                    <span class="text-success">Yes</span>
+                                                    {% else %}
+                                                    <a href="{% url 'verify_user'  %}" class="btn btn-success verified-button">Yes</a>
+                                                    <a href="{% url 'verify_user'  %}" class="btn btn-danger verified-button">No</a>
+                                                    {% endif %}
                                                 </td>
                                                 <td>
-                                                    <a href="{% url 'delete_user' i.id %}" onclick="return confirm('Are you sure you want to delete?')" class="btn btn-danger">Delete</a>
+                                                    <a href="{% url 'delete_user'  %}" onclick="return confirm('Are you sure you want to delete?')" class="btn btn-danger">Delete</a>
                                                 </td>
                                             </tr>
                                             {% endfor %}
@@ -172,6 +180,15 @@ function togglePassword(element_id, btnId){
         elementBtn.children[0].classList.remove("fa-eye-slash");
         elementBtn.children[0].classList.add("fa-eye");
     }
+}
+
+// Select all members checkbox functionality
+function toggleSelectAll() {
+    var selectAll = document.getElementById('select-all');
+    var memberCheckboxes = document.querySelectorAll('.select-member');
+    memberCheckboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
 }
 
 document.addEventListener("DOMContentLoaded", function () {

@@ -551,20 +551,23 @@ from django.contrib import messages
 
 def trainer_login(request):
     if request.method == "POST":
-        username = request.POST['username']
-        password = request.POST['password']
-        
+        username = request.POST.get("username")  
+        password = request.POST.get("password")
+
+        if not username or not password:
+            messages.error(request, "Username and Password are required.")
+            return redirect("trainer_login")
+
         user = authenticate(request, username=username, password=password)
-        
-        if user is not None and user.is_staff:  # Assuming trainers are also staff members
+
+        if user is not None:
             login(request, user)
-            messages.success(request, "Trainer Login Successful")
-            return redirect('trainer_page')  # Redirect to the trainer's dashboard or homepage
+            return redirect("trainer_page")  
         else:
-            messages.error(request, "Invalid username or password")
-            return redirect('trainer_login')
-    
-    return render(request, 'trainer_login.html')
+            messages.error(request, "Invalid username or password.")
+            return redirect("trainer_login")
+
+    return render(request, "trainer_login.html")
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -642,48 +645,40 @@ from django.shortcuts import render, redirect
 from .models import Trainer
 from django.http import JsonResponse
 
+from django.shortcuts import render, redirect
+from django.http import JsonResponse
+from django.contrib import messages
+from .models import Trainer, Signup  
 def trainer_registration(request):
     if request.method == "POST":
-        first_name = request.POST.get('first_name', '')  
-        last_name = request.POST.get('last_name', '')
-        email = request.POST.get('email', '')
-        phone = request.POST.get('phone', '')
-        address = request.POST.get('address', '')
+        fname = request.POST['firstname']
+        lname = request.POST['lastname']
+        email = request.POST['email']
+        password = request.POST['password']
+        phone = request.POST['phone']
+        address = request.POST['address']
         experience = request.POST.get('experience', '')
-        password = request.POST.get('password', '')
 
-        if not first_name or not last_name or not email or not password:
-            messages.error(request, "All fields are required!")
-            return render(request, 'trainer_reg.html', locals())
-
-        # Check if user already exists
-        if User.objects.filter(username=email).exists():
-            messages.error(request, "Email already registered. Try logging in.")
-            return render(request, 'trainer_reg.html', locals())
-
-        # Create User
-        user = User.objects.create_user(
-            first_name=first_name, 
-            last_name=last_name, 
-            email=email, 
-            password=password, 
-            username=email  # Username is email
+        user = User.objects.create_user(username=email, email=email, password=password)
+        trainer = Trainer.objects.create(
+            user=user,
+            first_name=fname,
+            last_name=lname,
+            email=email,
+            phone=phone,
+            address=address,
+            experience=experience
         )
-
-        # Create Signup record (if applicable)
-        Signup.objects.create(user=user, mobile=phone, address=address)
-
-        messages.success(request, "Registration Successful!! Please login.")
+        messages.success(request, "Trainer Registered Successfully")
         return redirect('trainer_login')
 
-    return render(request, 'trainer_reg.html')
+    return render(request, 'trainer_reg.html', locals())
 
+@login_required
+def reg_trainer(request):
+    trainers = Trainer.objects.all()  # Get all trainers
+    return render(request, 'admin/reg_trainer.html', {'trainers': trainers})
 
-def trainer_list(request):
-    trainers = Trainer.objects.all()
-    return render(request, 'reg_trainer.html', {'trainers': trainers})
-
-# Optional: You can add a delete functionality for trainers as well
 def delete_trainer(request, trainer_id):
     try:
         trainer = Trainer.objects.get(id=trainer_id)
@@ -691,3 +686,13 @@ def delete_trainer(request, trainer_id):
         return JsonResponse({"success": True})
     except Trainer.DoesNotExist:
         return JsonResponse({"success": False, "error": "Trainer not found"})
+    
+def verify_trainer(request, trainer_id):
+    trainer = get_object_or_404(Trainer, id=trainer_id)
+    
+    # Toggle the verification status
+    trainer.is_verified = not trainer.is_verified
+    trainer.save()
+    
+    # Redirect to the trainer registration page or wherever you want
+    return redirect('reg_trainer')    
