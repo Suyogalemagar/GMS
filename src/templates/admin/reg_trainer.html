@@ -116,8 +116,16 @@
                                                         {% if trainer.is_verified %}
                                                             <span class="text-success">Yes</span>
                                                         {% else %}
-                                                            <a href="{% url 'verify_trainer'  %}" class="btn btn-success verified-button">Yes</a>
-                                                            <a href="{% url 'verify_trainer'  %}" class="btn btn-danger verified-button">No</a>
+                                                        <form method="post" action="{% url 'verify_trainer' %}">
+                                                            {% csrf_token %}
+                                                            <input type="hidden" name="trainer_id" value="{{ trainer.user.id }}">
+                                                            <button type="submit" class="btn btn-success verified-button">Yes</button>
+                                                        </form>
+                                                         <form method="post" action="{% url 'verify_trainer' %}">
+                                                            {% csrf_token %}
+                                                            <input type="hidden" name="trainer_id" value="{{ trainer.user.id }}">
+                                                             <button type="submit" class="btn btn-danger verified-button">No</button>
+                                                        </form>
                                                         {% endif %}
                                                     </td>
                                                     <td>

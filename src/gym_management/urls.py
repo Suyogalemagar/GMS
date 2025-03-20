@@ -49,7 +49,8 @@ urlpatterns = [
     path('delete-user/', delete_user, name='delete_user'),
     path('trainer_registration/', trainer_registration, name='register_trainer'),
     path('delete_trainer/<int:trainer_id>/', delete_trainer, name='delete_trainer'), 
-    path('trainer_login/', trainer_login, name='trainer_login'),
+    
+    
 
 
 ]+static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

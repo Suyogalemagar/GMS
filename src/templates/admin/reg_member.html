@@ -119,11 +119,11 @@
                                             <tbody>
                                             {% for i in data %}
                                             <tr>
-                                                <td><input type="checkbox" class="select-member" data-member-id="{{ i.id }}"></td> <!-- Individual member checkbox -->
+                                                <td><input type="checkbox" class="select-member" data-member-id="{{ i.user_id }}"></td> <!-- Individual member checkbox -->
                                                 <th scope="row">{{ forloop.counter }}</th>
                                                 <td>{{ i.user.first_name }} {{ i.user.last_name }}</td>
                                                 <td>
-                                                    <span id="email-{{ forloop.counter }}" class="password">{{ i.user.username }}</span>
+                                                    <span id="email-{{ forloop.counter }}" class="password">{{ i.username }}</span>
                                                     <button type="button" class="btn btn-success" id="email-btn-{{ forloop.counter }}" onclick="togglePassword('email-{{ forloop.counter }}', this.id)">
                                                         <i class="fa fa-eye"></i>
                                                     </button>
@@ -140,8 +140,8 @@
                                                     {% if i.is_verified %}
                                                     <span class="text-success">Yes</span>
                                                     {% else %}
-                                                    <a href="{% url 'verify_user'  %}" class="btn btn-success verified-button">Yes</a>
-                                                    <a href="{% url 'verify_user'  %}" class="btn btn-danger verified-button">No</a>
+                                                    <button type="button" class="btn btn-success verified-button" data-choice="Yes" data-user-id="{{ i.user_id }}">Yes</button>
+<button type="button" class="btn btn-danger verified-button" data-choice="No" data-user-id="{{ i.user_id }}">No</button>
                                                     {% endif %}
                                                 </td>
                                                 <td>
@@ -165,6 +165,46 @@
 
 <!-- JavaScript for verification and password toggle -->
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const buttons = document.querySelectorAll('.verified-button');
+    
+        buttons.forEach(button => {
+            button.addEventListener('click', function() {
+                const choice = this.getAttribute('data-choice');
+                const userId = this.getAttribute('data-user-id');
+                alert(userId);
+                fetch("{% url 'verify_user' %}", {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'X-CSRFToken': '{{ csrf_token }}' // Get the CSRF token from the template
+                    },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        choice: choice // Can pass the choice if you want
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                         // Handle Success (e.g., show a message)
+                        alert('User verified successfully');
+                        // Do something if verification is successfull
+                         console.log('Verification successful', data)
+                    } else {
+                        // Handle Error (e.g., show an error message)
+                        alert('Error verifying user: ' + data.error);
+                        console.error('Error during verification:', data)
+                    }
+                })
+                .catch(error => {
+                    //Handle the error
+                    console.error('Error:', error);
+                    alert('An unexpected error occurred while verifying')
+                });
+            });
+        });
+    });
 function togglePassword(element_id, btnId){
     var elementData = document.getElementById(element_id);
     var elementBtn = document.getElementById(btnId);

@@ -16,7 +16,7 @@ def index(request):
             if user.is_staff:
                 login(request, user)
                 messages.success(request, "Logged In Successfully")
-                return redirect('admin_home')
+                return redirect('admin_base')
             else:
                 messages.success(request, "Invalid Credentials, Please try again")
                 return redirect('index')
@@ -26,13 +26,13 @@ def index(request):
 def registration(request):
     if request.method == "POST":
         fname = request.POST['firstname']
-        lname = request.POST['secondname']
+        lname = request.POST['lastname']
         email = request.POST['email']
         pwd = request.POST['password']
         mobile = request.POST['mobile']
         address = request.POST['address']
 
-        user = User.objects.create_user(first_name=fname, last_name=lname, email=email, password=pwd, username=email)
+        user = User.objects.create_user(first_name=fname, last_name=lname, email=email, password=pwd, username=email,is_active=0)
         Signup.objects.create(user=user, mobile=mobile,address=address)
         messages.success(request, "Register Successful")
         return redirect('user_login')
@@ -44,6 +44,8 @@ def user_login(request):
         pwd = request.POST['password']
         user = authenticate(username=email, password=pwd)
         if user:
+            if user.is_active ==0:
+                messages.error(request,"not verified")
             if user.is_staff:
                 messages.success(request, "Invalid User")
                 return redirect('user_login')
@@ -143,6 +145,7 @@ def deleteCategory(request, pid):
 @login_required(login_url='/admin_login/')
 def reg_member(request):
     data = Signup.objects.all()
+    print(data)
     d = {'data': data}
     return render(request, "admin/reg_member.html", locals())
 
@@ -285,7 +288,7 @@ def admin_login(request):
 @login_required
 def admin_home(request):
     # This page is accessible only by logged-in users with the 'is_staff' flag
-    return render(request, 'admin_base.html')
+    return render(request, 'admin/admin_home.html')
 
 
 @login_required(login_url='/user_login/')
@@ -458,7 +461,7 @@ def apply_booking(request, pid):
     return render(request, 'hidden_post_form.html', context)
 
 from django.shortcuts import render, redirect
-from django.http import JsonResponse
+from django.http import HttpResponseBadRequest, JsonResponse
 from django.urls import reverse
 from django.conf import settings
 from .models import Payment
@@ -553,7 +556,7 @@ def trainer_login(request):
     if request.method == "POST":
         username = request.POST.get("username")  
         password = request.POST.get("password")
-
+        print(username,password)
         if not username or not password:
             messages.error(request, "Username and Password are required.")
             return redirect("trainer_login")
@@ -562,7 +565,7 @@ def trainer_login(request):
 
         if user is not None:
             login(request, user)
-            return redirect("trainer_page")  
+            return render(request,"Trainers/trainer_page.html")  
         else:
             messages.error(request, "Invalid username or password.")
             return redirect("trainer_login")
@@ -578,8 +581,9 @@ def verify_user(request):
         try:
             data = json.loads(request.body)
             user_id = data.get("user_id")
-            user = Signup.objects.get(id=user_id)
-            user.is_verified = True
+            user = User.objects.get(id=user_id)
+            print(user)
+            user.is_active = 1
             user.save()
             return JsonResponse({"success": True})
         except Signup.DoesNotExist:
@@ -587,6 +591,7 @@ def verify_user(request):
         except Exception as e:
             return JsonResponse({"success": False, "error": str(e)})
     return JsonResponse({"success": False, "error": "Invalid request"})
+
 def get_users(request):
     if request.method == "GET":
         users = Signup.objects.select_related('user').all()
@@ -597,7 +602,7 @@ def get_users(request):
                 "email": user.user.username,
                 "mobile": user.mobile,
                 "address": user.address,
-                "is_verified": user.is_verified
+                "is_active": user.is_active
             }
             for user in users
         ]
@@ -607,19 +612,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import Signup
 
-@csrf_exempt  # Allow AJAX POST without CSRF token (only for testing, use proper CSRF handling in production)
-def verify_user(request):
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            user_id = data.get("user_id")
-            user = Signup.objects.get(id=user_id)
-            user.is_verified = True
-            user.save()
-            return JsonResponse({"success": True})
-        except Signup.DoesNotExist:
-            return JsonResponse({"success": False, "error": "User not found"})
-    return JsonResponse({"success": False, "error": "Invalid request"})
+
 
 
 # views.py
@@ -687,7 +680,17 @@ def delete_trainer(request, trainer_id):
     except Trainer.DoesNotExist:
         return JsonResponse({"success": False, "error": "Trainer not found"})
     
-def verify_trainer(request, trainer_id):
+def verify_trainer(request):
+    trainer_id = request.POST.get('trainer_id')
+    
+    if not trainer_id:
+        return HttpResponseBadRequest("Trainer ID is required.")
+        
+    try:
+        trainer_id = int(trainer_id)
+    except ValueError:
+        return HttpResponseBadRequest("Invalid trainer ID format.")
+
     trainer = get_object_or_404(Trainer, id=trainer_id)
     
     # Toggle the verification status
@@ -695,4 +698,4 @@ def verify_trainer(request, trainer_id):
     trainer.save()
     
     # Redirect to the trainer registration page or wherever you want
-    return redirect('reg_trainer')    
+    return redirect('reg_trainer')
