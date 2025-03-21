@@ -40,11 +40,12 @@ urlpatterns = [
     path('admin_home/', admin_home, name='admin_home'),
     path('admin/verify-user/', verify_user, name='verify_user'),
     
+    
     path('reg_trainer/', reg_trainer, name="reg_trainer"),
     path('trainer_registration',trainer_registration,name='trainer_registration'),
     path('get-users/', get_users, name='get_users'),  # Fetch users
     path('verify_user/', verify_user, name='verify_user'),  # Verify user
-    path('verify_trainer/', verify_trainer, name='verify_trainer'),
+    path('verify_trainer/',verify_trainer, name='verify_trainer'),
     path('trainer_login/', trainer_login, name='trainer_login'),
     path('delete-user/', delete_user, name='delete_user'),
     path('trainer_registration/', trainer_registration, name='register_trainer'),

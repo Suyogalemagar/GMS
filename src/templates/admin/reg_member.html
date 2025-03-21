@@ -137,7 +137,7 @@
                                                 <td>{{ i.address }}</td>
                                                 <td>
                                                     <!-- Verification with Yes/No buttons -->
-                                                    {% if i.is_verified %}
+                                                    {% if i.user.is_active %}
                                                     <span class="text-success">Yes</span>
                                                     {% else %}
                                                     <button type="button" class="btn btn-success verified-button" data-choice="Yes" data-user-id="{{ i.user_id }}">Yes</button>

@@ -562,7 +562,11 @@ def trainer_login(request):
             return redirect("trainer_login")
 
         user = authenticate(request, username=username, password=password)
-
+        trainer= Trainer.objects.get(user_id=user.id)
+        print(trainer)
+        if( trainer.is_verified==0):
+            messages.error(request,"Not verified")
+            return render(request,"trainer_login.html")
         if user is not None:
             login(request, user)
             return render(request,"Trainers/trainer_page.html")  
@@ -644,29 +648,38 @@ from django.contrib import messages
 from .models import Trainer, Signup  
 def trainer_registration(request):
     if request.method == "POST":
-        fname = request.POST['firstname']
-        lname = request.POST['lastname']
+        fname = request.POST['first_name']
+        lname = request.POST['last_name']
         email = request.POST['email']
         password = request.POST['password']
         phone = request.POST['phone']
         address = request.POST['address']
         experience = request.POST.get('experience', '')
 
-        user = User.objects.create_user(username=email, email=email, password=password)
-        trainer = Trainer.objects.create(
-            user=user,
-            first_name=fname,
-            last_name=lname,
-            email=email,
-            phone=phone,
-            address=address,
-            experience=experience
-        )
-        messages.success(request, "Trainer Registered Successfully")
-        return redirect('trainer_login')
+        # Check if the username (email) already exists
+        if User.objects.filter(username=email).exists():
+            messages.error(request, "This email is already registered. Please use a different email.")  # Use messages for error display
+            return render(request, 'trainer_reg.html', {'first_name': fname, 'last_name': lname, 'email': email, 'phone': phone, 'address': address, 'experience': experience}) # Re-render the form with the data entered, so the user doesn't have to re-enter everything.
 
-    return render(request, 'trainer_reg.html', locals())
+        try:
+            user = User.objects.create_user(username=email, email=email, password=password)
+            trainer = Trainer.objects.create(
+                user=user,
+                first_name=fname,
+                last_name=lname,
+                email=email,
+                phone=phone,
+                address=address,
+                experience=experience
+            )
+            messages.success(request, "Trainer Registered Successfully")
+            return redirect('trainer_login')
 
+        except Exception as e: # Catch any other potential errors during user creation
+            messages.error(request, f"Registration failed: {e}")  # Log the error for debugging
+            return render(request, 'trainer_reg.html', {'first_name': fname, 'last_name': lname, 'email': email, 'phone': phone, 'address': address, 'experience': experience}) # Re-render the form with the data entered
+
+    return render(request, 'trainer_reg.html') # Render empty form for GET requests
 @login_required
 def reg_trainer(request):
     trainers = Trainer.objects.all()  # Get all trainers
@@ -682,6 +695,7 @@ def delete_trainer(request, trainer_id):
     
 def verify_trainer(request):
     trainer_id = request.POST.get('trainer_id')
+    print(trainer_id)
     
     if not trainer_id:
         return HttpResponseBadRequest("Trainer ID is required.")
@@ -691,7 +705,7 @@ def verify_trainer(request):
     except ValueError:
         return HttpResponseBadRequest("Invalid trainer ID format.")
 
-    trainer = get_object_or_404(Trainer, id=trainer_id)
+    trainer = get_object_or_404(Trainer, user_id=trainer_id)
     
     # Toggle the verification status
     trainer.is_verified = not trainer.is_verified

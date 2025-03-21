@@ -4,7 +4,10 @@ from django.utils import timezone
 
 
 class Trainer(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True) 
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
+    first_name = models.CharField(max_length=100, null=True)
+    last_name = models.CharField(max_length=100, null=True)
+    email = models.EmailField(null=True, blank=True)  
     phone = models.CharField(max_length=15)
     address = models.TextField()
     experience = models.PositiveIntegerField(null=True, blank=True)  
