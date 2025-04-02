@@ -92,3 +92,14 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"Payment {self.transaction_uuid} - {self.user.username if self.user else 'Unknown'}"
+
+class Class(models.Model):
+    name = models.CharField(max_length=100)
+    trainer = models.ForeignKey(Trainer, on_delete=models.SET_NULL, null=True, blank=True)
+    schedule = models.CharField(max_length=255)  # e.g., "Monday, Wednesday 6:00 PM"
+    capacity = models.PositiveIntegerField()
+    members = models.ManyToManyField(Signup, blank=True)
+    creationdate = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} - {self.trainer.first_name if self.trainer else 'Unassigned'}"

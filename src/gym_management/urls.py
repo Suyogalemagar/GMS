@@ -40,7 +40,7 @@ urlpatterns = [
     path('admin_home/', admin_home, name='admin_home'),
     path('admin/verify-user/', verify_user, name='verify_user'),
     
-    
+    path('add_class/',add_class,name="add_class"),
     path('reg_trainer/', reg_trainer, name="reg_trainer"),
     path('trainer_registration',trainer_registration,name='trainer_registration'),
     path('get-users/', get_users, name='get_users'),  # Fetch users

@@ -713,3 +713,31 @@ def verify_trainer(request):
     
     # Redirect to the trainer registration page or wherever you want
     return redirect('reg_trainer')
+
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .models import Class, Trainer
+
+def add_class(request):
+    if request.method == "POST":
+        class_name = request.POST.get('class_name')
+        description = request.POST.get('description')
+        schedule = request.POST.get('schedule')
+        trainer_id = request.POST.get('trainer')  # Get trainer ID from the form
+        
+        trainer = Trainer.objects.get(id=trainer_id) if trainer_id else None
+
+        # Create and save the class instance
+        new_class = Class.objects.create(
+            class_name=class_name,
+            description=description,
+            schedule=schedule,
+            trainer=trainer
+        )
+        messages.success(request, "Class added successfully!")
+        return redirect('addclasses.html')  # Redirect to the same page or another
+
+    trainers = Trainer.objects.all()  # Fetch all trainers for the dropdown
+    return render(request, 'admin/addclasses.html', {'trainers': trainers})
+
+    
