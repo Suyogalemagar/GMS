@@ -41,6 +41,9 @@ urlpatterns = [
     path('admin/verify-user/', verify_user, name='verify_user'),
     
     path('add_class/',add_class,name="add_class"),
+    path('classlist/', class_list, name='classlist'),
+    path('edit_class/<int:class_id>/', edit_class, name='edit_class'),
+    path('delete_class/<int:class_id>/', delete_class, name='delete_class'),
     path('reg_trainer/', reg_trainer, name="reg_trainer"),
     path('trainer_registration',trainer_registration,name='trainer_registration'),
     path('get-users/', get_users, name='get_users'),  # Fetch users

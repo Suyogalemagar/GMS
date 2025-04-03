@@ -716,28 +716,55 @@ def verify_trainer(request):
 
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from .models import Class, Trainer
+from .models import Class, Trainer, Signup
 
 def add_class(request):
     if request.method == "POST":
-        class_name = request.POST.get('class_name')
-        description = request.POST.get('description')
+        name = request.POST.get('name')
+        trainer_id = request.POST.get('trainer')
         schedule = request.POST.get('schedule')
-        trainer_id = request.POST.get('trainer')  # Get trainer ID from the form
-        
+        capacity = request.POST.get('capacity')
+
         trainer = Trainer.objects.get(id=trainer_id) if trainer_id else None
 
-        # Create and save the class instance
-        new_class = Class.objects.create(
-            class_name=class_name,
-            description=description,
-            schedule=schedule,
-            trainer=trainer
-        )
-        messages.success(request, "Class added successfully!")
-        return redirect('addclasses.html')  # Redirect to the same page or another
+        if name and schedule and capacity:
+            new_class = Class.objects.create(
+                name=name,
+                trainer=trainer,
+                schedule=schedule,
+                capacity=capacity
+            )
+            messages.success(request, "Class added successfully!")
+            return redirect('classlist')
+        else:
+             messages.error(request, "Please fill all the required fields")
+             return redirect('add_class')
 
-    trainers = Trainer.objects.all()  # Fetch all trainers for the dropdown
+
+    trainers = Trainer.objects.all()
     return render(request, 'admin/addclasses.html', {'trainers': trainers})
 
+
+def class_list(request):
+    classes = Class.objects.all()
+    return render(request, 'admin/classlist.html', {'classes': classes})
+
+
+def edit_class(request, class_id):
+    class_instance = get_object_or_404(Class, id=class_id)
     
+    if request.method == "POST":
+        class_instance.name = request.POST.get('name')
+        class_instance.schedule = request.POST.get('schedule')
+        class_instance.capacity = request.POST.get('capacity')
+        class_instance.save()
+        return redirect('class_list')
+
+    return render(request, 'edit_class.html', {'class_instance': class_instance})
+
+def delete_class(request, class_id):
+    class_obj = Class.objects.get(id=class_id)
+    class_obj.delete()
+    messages.success(request, "Class deleted successfully!")
+    return redirect('classlist')
+
