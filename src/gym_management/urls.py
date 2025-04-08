@@ -42,6 +42,7 @@ urlpatterns = [
     
     path('add_class/',add_class,name="add_class"),
     path('classlist/', class_list, name='classlist'),
+    path('trainerclass/',trainer_dashboard , name='trainerclass'),
     path('edit_class/<int:class_id>/', edit_class, name='edit_class'),
     path('delete_class/<int:class_id>/', delete_class, name='delete_class'),
     path('reg_trainer/', reg_trainer, name="reg_trainer"),
@@ -50,10 +51,12 @@ urlpatterns = [
     path('verify_user/', verify_user, name='verify_user'),  # Verify user
     path('verify_trainer/',verify_trainer, name='verify_trainer'),
     path('trainer_login/', trainer_login, name='trainer_login'),
+    path('trainer_page/',trainer_dashboard,name="trainer_page"),
     path('delete-user/', delete_user, name='delete_user'),
     path('trainer_registration/', trainer_registration, name='register_trainer'),
     path('delete_trainer/<int:trainer_id>/', delete_trainer, name='delete_trainer'), 
-    
+    path('member_attendance/', member_attendance, name='member_attendance'),
+    path('mark_attendance/<int:member_id>/<str:status>/', mark_attendance, name='mark_attendance'),
     
 
 

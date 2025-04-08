@@ -7,11 +7,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gym Management System</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Trainer Dashboard</title>
+    <link rel="stylesheet" href="{% static 'assets/styles.css' %}">
     <style>
         body {
-            background-image :url(.src/static/assets/images/guygym.jpg);  
+            background-image: url("{% static 'assets/images/guygym.jpg' %}");
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -59,15 +59,20 @@
             color: #FFD700;
         }
         .class-schedule {
-            background-color: black;
+            background-color: #000;
             color: white;
             padding: 20px;
             display: inline-block;
             border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .class-schedule h3 {
+            color: #FFD700;
         }
         table {
             width: 100%;
             border-collapse: collapse;
+            margin-top: 20px;
         }
         th, td {
             border: 1px solid white;
@@ -78,79 +83,55 @@
             background-color: #FFD700;
             color: black;
         }
+        .class-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+        }
+        .class-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #FFD700;
+        }
+        .class-schedule-info {
+            font-size: 16px;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
     <main>
         <div class="dashboard">
-            <h2><span class="highlight">Welcome</span> Trainer!!</h2>
+            <h2><span class="highlight">Welcome</span> {{ trainer.first_name }} {{ trainer.last_name }}!</h2>
             <p>Today's classes</p>
-            <div class="row">
-                <div class="col-lg-6 offset-lg-3">
-                    <div class="section-heading dark-bg">
-                        <h2>Classes <em>Schedule</em></h2>
-                        <img src="assets/images/womengym.jpg" alt="">
-                        <p>Nunc urna sem, laoreet ut metus id, aliquet consequat magna. Sed viverra ipsum dolor, ultricies
-                            fermentum massa consequat eu.</p>
+
+            <div class="class-schedule">
+                <h3>Assigned Classes</h3>
+                
+                {% if classes %}
+                    <div class="class-list">
+                        {% for class in classes %}
+                            <div class="class-row">
+                                <div class="class-name">{{ class.name }}</div>
+                                <div class="class-schedule-info">
+                                    <strong>Schedule:</strong> {{ class.schedule }}<br>
+                                    <strong>Capacity:</strong> {{ class.capacity }}<br>
+                                    <strong>Members:</strong> {{ class.members.count }}<br>
+                                </div>
+                            </div>
+                        {% endfor %}
                     </div>
-                </div>
+                {% else %}
+                    <p>No classes assigned yet.</p>
+                {% endif %}
             </div>
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="filters">
-                        <ul class="schedule-filter">
-                            <li class="active" data-tsfilter="monday">Monday</li>
-                            <li data-tsfilter="tuesday">Tuesday</li>
-                            <li data-tsfilter="wednesday">Wednesday</li>
-                            <li data-tsfilter="thursday">Thursday</li>
-                            <li data-tsfilter="friday">Friday</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-lg-10 offset-lg-1">
-                    <div class="schedule-table filtering">
-                        <table>
-                            <tbody>
-                            <tr>
-                                <td class="day-time">Fitness Class</td>
-                                <td class="monday ts-item show" data-tsmeta="monday">10:00AM - 11:30AM</td>
-                                <td class="tuesday ts-item" data-tsmeta="tuesday">2:00PM - 3:30PM</td>
-                                <td>William G. Stewart</td>
-                            </tr>
-                            <tr>
-                                <td class="day-time">Muscle Training</td>
-                                <td class="friday ts-item" data-tsmeta="friday">10:00AM - 11:30AM</td>
-                                <td class="thursday friday ts-item" data-tsmeta="thursday" data-tsmeta="friday">2:00PM -
-                                    3:30PM
-                                </td>
-                                <td>Paul D. Newman</td>
-                            </tr>
-                            <tr>
-                                <td class="day-time">Body Building</td>
-                                <td class="tuesday ts-item" data-tsmeta="tuesday">10:00AM - 11:30AM</td>
-                                <td class="monday ts-item show" data-tsmeta="monday">2:00PM - 3:30PM</td>
-                                <td>Boyd C. Harris</td>
-                            </tr>
-                            <tr>
-                                <td class="day-time">Yoga Training Class</td>
-                                <td class="wednesday ts-item" data-tsmeta="wednesday">10:00AM - 11:30AM</td>
-                                <td class="friday ts-item" data-tsmeta="friday">2:00PM - 3:30PM</td>
-                                <td>Hector T. Daigle</td>
-                            </tr>
-                            <tr>
-                                <td class="day-time">Advanced Training</td>
-                                <td class="thursday ts-item" data-tsmeta="thursday">10:00AM - 11:30AM</td>
-                                <td class="wednesday ts-item" data-tsmeta="wednesday">2:00PM - 3:30PM</td>
-                                <td>Bret D. Bowers</td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+
         </div>
     </main>
 </body>
 </html>
 {% endblock %}
-

@@ -568,12 +568,13 @@ def trainer_login(request):
             messages.error(request,"Not verified")
             return render(request,"trainer_login.html")
         if user is not None:
+            print("i am here")
             login(request, user)
-            return render(request,"Trainers/trainer_page.html")  
+            return redirect("trainer_page")  
         else:
             messages.error(request, "Invalid username or password.")
             return redirect("trainer_login")
-
+    print("no i am here")
     return render(request, "trainer_login.html")
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -768,3 +769,45 @@ def delete_class(request, class_id):
     messages.success(request, "Class deleted successfully!")
     return redirect('classlist')
 
+def trainer_dashboard(request):
+    print("hello")
+    # Get the trainer associated with the current logged-in user
+    try:
+        trainer = Trainer.objects.get(user=request.user)
+        print("trainer")
+        print(trainer.pk)
+    except Trainer.DoesNotExist:
+        trainer = None  # Handle case when trainer doesn't exist for the user
+
+    # Fetch all classes assigned to this trainer
+    classes = Class.objects.filter(trainer_id=trainer.pk)
+    print(classes)
+    return render(request, 'Trainers/trainer_page.html', {'trainer': trainer, 'classes': classes})
+
+def member_attendance(request):
+    query = request.GET.get('q', '')
+    members = Signup.objects.filter(user__username__icontains=query) if query else Signup.objects.all()
+
+    if request.method == 'POST':
+        member_id = request.POST.get('member_id')
+        status = request.POST.get('status')
+        if member_id and status:
+            member = Signup.objects.get(id=member_id)
+            MemberAttendance.objects.create(member=member, status=status)
+
+    context = {
+        'members': members,
+        'query': query,
+    }
+    return render(request, 'admin/member_attendence.html', context)
+
+@login_required
+def mark_attendance(request, member_id, status):
+    if request.method == 'POST':
+        member = get_object_or_404(Signup, id=member_id)
+        MemberAttendance.objects.update_or_create(
+            member=member,
+            date=timezone.now().date(),
+            defaults={'status': status}
+        )
+    return redirect('member_attendance')

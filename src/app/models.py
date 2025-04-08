@@ -103,3 +103,10 @@ class Class(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.trainer.first_name if self.trainer else 'Unassigned'}"
+class MemberAttendance(models.Model):
+    member = models.ForeignKey('Signup', on_delete=models.CASCADE)
+    date = models.DateField(default=timezone.now)
+    status = models.CharField(max_length=10, choices=[('Present', 'Present'), ('Absent', 'Absent')])
+
+    def __str__(self):
+        return f"{self.member.user.username} - {self.date} - {self.status}"
