@@ -19,8 +19,8 @@
         <table style="width: 100%; border-collapse: collapse; background-color: white; border-radius: 8px; overflow: hidden;">
             <thead>
                 <tr style="background-color: #007BFF; color: white;">
-                    <th style="padding: 15px; text-align: left; border-right: 1px solid #ffffff50;">Name</th>
-                    <th style="padding: 15px; text-align: left; border-right: 1px solid #ffffff50;">Email</th>
+                    <th style="padding: 15px; text-align: left;">Name</th>
+                    <th style="padding: 15px; text-align: left;">Email</th>
                     <th style="padding: 15px; text-align: center;">Status</th>
                 </tr>
             </thead>
@@ -30,20 +30,26 @@
                     <td style="padding: 15px;">{{ member.user.first_name }} {{ member.user.last_name }}</td>
                     <td style="padding: 15px;">{{ member.user.email }}</td>
                     <td style="padding: 15px; text-align: center;">
-                        <form method="post" action="{% url 'mark_attendance' member.id 'present' %}" style="display: inline;">
-                            {% csrf_token %}
-                            <button type="submit" 
-                                    style="background-color: #28a745; color: white; padding: 8px 16px; border: none; border-radius: 5px; margin-right: 5px; cursor: pointer;">
-                                Present
-                            </button>
-                        </form>
-                        <form method="post" action="{% url 'mark_attendance' member.id 'absent' %}" style="display: inline;">
-                            {% csrf_token %}
-                            <button type="submit" 
-                                    style="background-color: #dc3545; color: white; padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer;">
-                                Absent
-                            </button>
-                        </form>
+                        {% if member.attendance_status == "Present" %}
+                            <span style="color: green; font-weight: bold;">Present</span>
+                        {% elif member.attendance_status == "Absent" %}
+                            <span style="color: red; font-weight: bold;">Absent</span>
+                        {% else %}
+                            <form method="post" action="{% url 'mark_attendance' member.id 'Present' %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" 
+                                        style="background-color: #28a745; color: white; padding: 8px 16px; border: none; border-radius: 5px; margin-right: 5px; cursor: pointer;">
+                                    Present
+                                </button>
+                            </form>
+                            <form method="post" action="{% url 'mark_attendance' member.id 'Absent' %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" 
+                                        style="background-color: #dc3545; color: white; padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer;">
+                                    Absent
+                                </button>
+                            </form>
+                        {% endif %}
                     </td>
                 </tr>
                 {% empty %}

@@ -96,7 +96,7 @@ class Payment(models.Model):
 class Class(models.Model):
     name = models.CharField(max_length=100)
     trainer = models.ForeignKey(Trainer, on_delete=models.SET_NULL, null=True, blank=True)
-    schedule = models.CharField(max_length=255)  # e.g., "Monday, Wednesday 6:00 PM"
+    schedule = models.CharField(max_length=255, default="To be determined")  # e.g., "Monday, Wednesday 6:00 PM"
     capacity = models.PositiveIntegerField()
     members = models.ManyToManyField(Signup, blank=True)
     creationdate = models.DateTimeField(auto_now_add=True)
@@ -106,6 +106,7 @@ class Class(models.Model):
 class MemberAttendance(models.Model):
     member = models.ForeignKey('Signup', on_delete=models.CASCADE)
     date = models.DateField(default=timezone.now)
+    time = models.TimeField(default=timezone.now)
     status = models.CharField(max_length=10, choices=[('Present', 'Present'), ('Absent', 'Absent')])
 
     def __str__(self):

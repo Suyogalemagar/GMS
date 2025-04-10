@@ -719,14 +719,20 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from .models import Class, Trainer, Signup
 
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from .models import Class, Trainer, Signup
+
 def add_class(request):
     if request.method == "POST":
         name = request.POST.get('name')
         trainer_id = request.POST.get('trainer')
         schedule = request.POST.get('schedule')
         capacity = request.POST.get('capacity')
+        member_ids = request.POST.getlist('members')  
 
         trainer = Trainer.objects.get(id=trainer_id) if trainer_id else None
+        members = Signup.objects.filter(id__in=member_ids)  # Get the Signup objects
 
         if name and schedule and capacity:
             new_class = Class.objects.create(
@@ -735,15 +741,20 @@ def add_class(request):
                 schedule=schedule,
                 capacity=capacity
             )
+            new_class.members.set(members)  
             messages.success(request, "Class added successfully!")
             return redirect('classlist')
         else:
-             messages.error(request, "Please fill all the required fields")
-             return redirect('add_class')
+            messages.error(request, "Please fill all the required fields")
+            
+            trainers = Trainer.objects.all()
+            members = Signup.objects.all()
+            return render(request, 'admin/addclasses.html', {'trainers': trainers,'members': members})
 
 
     trainers = Trainer.objects.all()
-    return render(request, 'admin/addclasses.html', {'trainers': trainers})
+    members = Signup.objects.all()
+    return render(request, 'admin/addclasses.html', {'trainers': trainers,'members': members})
 
 
 def class_list(request):
@@ -759,9 +770,9 @@ def edit_class(request, class_id):
         class_instance.schedule = request.POST.get('schedule')
         class_instance.capacity = request.POST.get('capacity')
         class_instance.save()
-        return redirect('class_list')
+        return redirect('admin/class_list')
 
-    return render(request, 'edit_class.html', {'class_instance': class_instance})
+    return render(request, 'admin/editclass.html', {'class_instance': class_instance})
 
 def delete_class(request, class_id):
     class_obj = Class.objects.get(id=class_id)
@@ -799,15 +810,46 @@ def member_attendance(request):
         'members': members,
         'query': query,
     }
-    return render(request, 'admin/member_attendence.html', context)
+    return render(request, 'admin/member_attendance.html', context)
 
-@login_required
+from django.contrib import messages
+from django.shortcuts import redirect, get_object_or_404
+from .models import  MemberAttendance
+import datetime
+
 def mark_attendance(request, member_id, status):
     if request.method == 'POST':
         member = get_object_or_404(Signup, id=member_id)
-        MemberAttendance.objects.update_or_create(
+        now = datetime.datetime.now()
+        date = now.date()
+        time = now.time()
+
+        # Optional: avoid duplicate entries
+        if MemberAttendance.objects.filter(member=member, date=date).exists():
+            messages.warning(request, f"{member.user.get_full_name()} is already marked today.")
+            return redirect('member_attendance')  
+
+        MemberAttendance.objects.create(
             member=member,
-            date=timezone.now().date(),
-            defaults={'status': status}
+            date=date,
+            time=time,
+            status=status
         )
+        messages.success(request, f"{member.user.get_full_name()} marked as {status}.")
+        return redirect('member_attendance') 
+
+    messages.error(request, "Invalid request method.")
     return redirect('member_attendance')
+
+
+
+
+from django.shortcuts import render
+from .models import MemberAttendance
+
+def attendance_report(request):
+    member_attendance = MemberAttendance.objects.all().select_related('member__user')
+    return render(request, 'admin/attendance_report.html', {'member_attendance': member_attendance})
+
+    
+

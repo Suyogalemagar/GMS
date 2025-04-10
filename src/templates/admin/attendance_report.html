@@ -1,0 +1,42 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+{% block main %}
+<div style="padding: 40px; background-color: #f4f4f4; min-height: 100vh; font-family: 'Segoe UI', sans-serif;">
+    <h2 style="margin-bottom: 25px; color: #333;">Attendance Report</h2>
+
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; background-color: white; border-radius: 8px; overflow: hidden;">
+            <thead>
+                <tr style="background-color: #007BFF; color: white;">
+                    <th style="padding: 15px; text-align: left;">Name</th>
+                    <th style="padding: 15px; text-align: left;">Email</th>
+                    <th style="padding: 15px; text-align: center;">Date</th>
+                    <th style="padding: 15px; text-align: center;">Time</th>
+                    <th style="padding: 15px; text-align: center;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for member_attendance in member_attendance %}
+                <tr style="border-bottom: 1px solid #e0e0e0;">
+                    <td style="padding: 15px;">{{ member_attendance.member.user.first_name }} {{ member_attendance.member.user.last_name }}</td>
+                    <td style="padding: 15px;">{{ member_attendance.member.user.email }}</td>
+                    <td style="padding: 15px; text-align: center;">{{ member_attendance.date }}</td>
+                    <td style="padding: 15px; text-align: center;">{{ member_attendance.time|time:"H:i:s" }}</td>
+                    <td style="padding: 15px; text-align: center;">
+                        {% if member_attendance.status == "Present" %}
+                            <span style="color: green; font-weight: bold;">Present</span>
+                        {% else %}
+                            <span style="color: red; font-weight: bold;">Absent</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="padding: 20px; text-align: center; color: #888;">No attendance records available.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

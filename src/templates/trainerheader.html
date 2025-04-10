@@ -71,7 +71,7 @@
                     <a href="#chat" class="nav-item nav-link">Chats</a>
                     <a href="#contact-us" class="nav-item nav-link">Contact</a>
                     {% if request.user.is_authenticated %}
-                    <a href="/booking_history/" class="nav-item nav-link">Booking History</a>
+                    
                     {% else %}
                     <a href="/login"><button style="color:red" class="nav-item nav-link">Login</button></a>
                     {% endif %}

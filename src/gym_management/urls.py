@@ -57,6 +57,8 @@ urlpatterns = [
     path('delete_trainer/<int:trainer_id>/', delete_trainer, name='delete_trainer'), 
     path('member_attendance/', member_attendance, name='member_attendance'),
     path('mark_attendance/<int:member_id>/<str:status>/', mark_attendance, name='mark_attendance'),
+    path('attendance_report/', attendance_report, name='attendance_report'),
+
     
 
 
