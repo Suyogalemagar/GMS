@@ -5308,7 +5308,7 @@ select.form-control:not([size]):not([multiple]) {
 /*======= Background-color css end  ======= */
 /*======= Button-color css starts  ======= */
 .color-primary {
-  background-color: #448aff; }
+  background-color: #FABC0C; }
 
 .color-warning {
   background-color: #ffe100; }
@@ -7747,7 +7747,7 @@ table tbody .border-bottom-info td {
             transform: rotate(180deg); }
 
 body[themebg-pattern="theme1"] {
-  background-color: #448aff; }
+  background-color: #FAD101; }
 body[themebg-pattern="theme2"] {
   background-color: #b71c1c; }
 body[themebg-pattern="theme3"] {

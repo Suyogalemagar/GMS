@@ -292,44 +292,41 @@ def admin_home(request):
 
 
 @login_required(login_url='/user_login/')
-def booking_history(request):
+def enrolled_history(request):
     data = Signup.objects.get(user=request.user)
-    data = Booking.objects.filter(register=data)
-    return render(request, "booking_history.html", locals())
+    data = Enroll.objects.filter(register=data)
+    return render(request, "enrolled_history.html", locals())
 
 @login_required(login_url='/admin_login/')
-def new_booking(request):
+def new_enroll(request):
     action = request.GET.get('action')
-    data = Booking.objects.filter()
+    data = Enroll.objects.all()
+
     if action == "New":
         data = data.filter(status="1")
-    elif action == "Partial":
-        data = data.filter(status="2")
-    elif action == "Full":
-        data = data.filter(status="3")
     elif action == "Total":
-        data = data.filter()
+        pass
+
     if request.user.is_staff:
-        return render(request, "admin/new_booking.html", locals())
+        return render(request, "admin/new_enroll.html", locals())
     else:
-        return render(request, "booking_history.html", locals())
+        return render(request, "enrolled_history.html", locals())
 
-
-def booking_detail(request, pid):
-    data = Booking.objects.get(id=pid)
+def enrolled_detail(request, pid):
+    data = Enroll.objects.get(id=pid)
     if request.method == "POST":
         price = request.POST['price']
         status = request.POST['status']
         data.status = status
         data.save()
-        Paymenthistory.objects.create(booking=data, price=price, status=status)
+        Paymenthistory.objects.create(Enroll=data, price=price, status=status)
         messages.success(request, "Action Updated")
-        return redirect('booking_detail', pid)
-    payment = Paymenthistory.objects.filter(booking=data)
+        return redirect('enrolled_detail', pid)
+    payment = Paymenthistory.objects.filter(Enroll=data)
     if request.user.is_staff:
-        return render(request, "admin/admin_booking_detail.html", locals())
+        return render(request, "admin/admin_enrolled_detail.html", locals())
     else:
-        return render(request, "user_booking_detail.html", locals())
+        return render(request, "user_enrolled_detail.html", locals())
 
 def editPackage(request, pid):
     category = Category.objects.all()
@@ -363,22 +360,22 @@ def deletePackage(request, pid):
     package.delete()
     return redirect('managePackage')
 
-def deleteBooking(request, pid):
-    booking = Booking.objects.get(id=pid)
-    booking.delete()
+def deleteenrolled(request, pid):
+    Enroll = Enroll.objects.get(id=pid)
+    Enroll.delete()
     messages.success(request, "Delete Successful")
-    return redirect('new_booking')
+    return redirect('new_enrolled')
 
-def bookingReport(request):
+def enrolledReport(request):
     data = None
     data2 = None
     if request.method == "POST":
         fromdate = request.POST['fromdate']
         todate = request.POST['todate']
 
-        data = Booking.objects.filter(creationdate__gte=fromdate, creationdate__lte=todate)
+        data = Enroll.objects.filter(creationdate__gte=fromdate, creationdate__lte=todate)
         data2 = True
-    return render(request, "admin/bookingReport.html", locals())
+    return render(request, "admin/enrolledReport.html", locals())
 
 def regReport(request):
     data = None
@@ -418,42 +415,42 @@ def random_with_N_digits(n):
     return randint(range_start, range_end)
 
 # @login_required(login_url='/user_login/')
-# def booking(request):
-#     booking = None
-#     bookinged = Booking.objects.filter(register__user=request.user)
-#     bookinged_list = [i.policy.id for i in bookinged]
-#     data = Package.objects.filter().exclude(id__in=bookinged_list)
+# def Enroll(request):
+#     Enroll = None
+#     enrolleded = Enroll.objects.filter(register__user=request.user)
+#     enrolleded_list = [i.policy.id for i in enrolleded]
+#     data = Package.objects.filter().exclude(id__in=enrolleded_list)
 #     if request.method == "POST":
-#         booking = Package.objects.filter()
-#         booking = BookingForm(request.POST, request.FILES, instance=booking)
-#         if booking.is_valid():
-#             booking = booking.save()
-#             booking.bookingnumber = random_with_N_digits(10)
-#             data.booking = booking
+#         Enroll = Package.objects.filter()
+#         Enroll = enrolledForm(request.POST, request.FILES, instance=Enroll)
+#         if Enroll.is_valid():
+#             Enroll = Enroll.save()
+#             Enroll.enrollednumber = random_with_N_digits(10)
+#             data.Enroll = Enroll
 #             data.save()
-#         Booking.objects.create(package=booking)
+#         Enroll.objects.create(package=Enroll)
 #         messages.success(request, "Action Updated")
-#         return redirect('booking')
+#         return redirect('Enroll')
 #     return render(request, "/", locals())
 
 @login_required(login_url='/user_login/')
-def apply_booking(request, pid):
+def apply_enrolled(request, pid):
     package = get_object_or_404(Package, id=pid)
     register = get_object_or_404(Signup, user=request.user)
 
-    booking = Booking.objects.create(
+    enrollment = Enroll.objects.create(
         package=package,
         register=register,
-        bookingnumber=random_with_N_digits(10)
+        enrollnumber=random_with_N_digits(10)
     )
 
-    messages.success(request, 'Booking Applied')
+    messages.success(request, 'Enroll Applied')
     
     payment_url = reverse('payment_view')
 
     context = {
       'action_url': payment_url,
-        'booking_id': booking.id,
+        'enrolled_id': enrollment.id,
         'amount': package.price,
     }
 
@@ -508,8 +505,8 @@ def payment_view(request):
         signature = generate_signature(total_amount, transaction_uuid, "EPAYTEST", secret)
         print(signature)
         user=User.objects.get(username=request.user)
-        booking=Booking.objects.get(id=request.POST.get("booking_id"))
-        print(booking)
+        enrollment=Enroll.objects.get(id=request.POST.get("enrolled_id"))
+        print(enrollment)
         print(request.user.id)
         # Save payment data in the database
         payment = Payment.objects.create(

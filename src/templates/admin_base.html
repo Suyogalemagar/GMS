@@ -125,7 +125,7 @@
                     <ul class="nav-right">
                         <li class="user-profile header-notification">
                             <a href="#!" class="waves-effect waves-light">
-                                <img src="{% static 'assets1/images/admin logo.jpeg' %}" class="img-radius"
+                                <img src="{% static 'assets1/images/avatar-blank.jpg' %}" class="img-radius"
                                      alt="">
                                 <span>Admin</span>
                                 <i class="ti-angle-down"></i>
@@ -155,7 +155,7 @@
                     <div class="pcoded-inner-navbar main-menu">
                         <div class="">
                             <div class="main-menu-header">
-                                <img class="img-80 img-radius" src="{% static 'assets1/images/avatar-1.png' %}"
+                                <img class="img-80 img-radius" src="{% static 'assets1/images/avatar-blank.jpg' %}"
                                      alt="">
                                 <div class="user-details">
                                     <span id="more-details">Admin<i class="fa fa-caret-down"></i></span>
@@ -306,36 +306,23 @@
                                 <a href="javascript:void(0)" class="waves-effect waves-dark">
                                     <span class="pcoded-micon"><i class="ti-layers"></i></span>
                                     <span class="pcoded-mtext"
-                                          data-i18n="nav.basic-components.main">Booking History</span>
+                                          data-i18n="nav.basic-components.main">Enrolled Class</span>
                                     <span class="pcoded-mcaret"></span>
                                 </a>
                                 <ul class="pcoded-submenu">
                                     <li class=" ">
-                                        <a href="/new_booking/?action=New" class="waves-effect waves-dark">
+                                        <a href="/new_enrolled/?action=New" class="waves-effect waves-dark">
                                             <span class="pcoded-micon"><i class="ti-angle-right"></i></span>
                                             <span class="pcoded-mtext"
-                                                  data-i18n="nav.basic-components.alert">New Booking</span>
+                                                  data-i18n="nav.basic-components.alert">New Enrolled</span>
                                             <span class="pcoded-mcaret"></span>
                                         </a>
                                     </li>
+                                    
                                     <li class=" ">
-                                        <a href="/new_booking/?action=Partial" class="waves-effect waves-dark">
+                                        <a href="/new_enrolled/?action=Total" class="waves-effect waves-dark">
                                             <span class="pcoded-micon"><i class="ti-angle-right"></i></span>
-                                            <span class="pcoded-mtext" data-i18n="nav.basic-components.breadcrumbs">Partial Payment</span>
-                                            <span class="pcoded-mcaret"></span>
-                                        </a>
-                                    </li>
-                                    <li class=" ">
-                                        <a href="/new_booking/?action=Full" class="waves-effect waves-dark">
-                                            <span class="pcoded-micon"><i class="ti-angle-right"></i></span>
-                                            <span class="pcoded-mtext" data-i18n="nav.basic-components.breadcrumbs">Full Payment</span>
-                                            <span class="pcoded-mcaret"></span>
-                                        </a>
-                                    </li>
-                                    <li class=" ">
-                                        <a href="/new_booking/?action=Total" class="waves-effect waves-dark">
-                                            <span class="pcoded-micon"><i class="ti-angle-right"></i></span>
-                                            <span class="pcoded-mtext" data-i18n="nav.basic-components.breadcrumbs">All Booking</span>
+                                            <span class="pcoded-mtext" data-i18n="nav.basic-components.breadcrumbs">Total Enrolled</span>
                                             <span class="pcoded-mcaret"></span>
                                         </a>
                                     </li>
@@ -376,10 +363,10 @@
                                 </a>
                                 <ul class="pcoded-submenu">
                                     <li class=" ">
-                                        <a href="{% url 'bookingReport' %}" class="waves-effect waves-dark">
+                                        <a href="{% url 'enrolledReport' %}" class="waves-effect waves-dark">
                                             <span class="pcoded-micon"><i class="ti-angle-right"></i></span>
                                             <span class="pcoded-mtext"
-                                                  data-i18n="nav.basic-components.alert">Booking Report</span>
+                                                  data-i18n="nav.basic-components.alert">enrolled Report</span>
                                             <span class="pcoded-mcaret"></span>
                                         </a>
                                     </li>
@@ -426,6 +413,29 @@
 
     .gym-logo h1:hover {
         color: #ff6600; /* Change color on hover */
+    }
+
+    /* Add custom navbar styling */
+    .navbar.header-navbar.pcoded-header {
+        background-color: #FAD200 !important;
+    }
+
+    .navbar.header-navbar.pcoded-header .navbar-wrapper {
+        background-color: #FAD200 !important;
+    }
+
+    .pcoded-navbar {
+        background: #FAD200 !important;
+    }
+
+    /* Adjust text colors for better contrast on yellow background */
+    .navbar.header-navbar.pcoded-header a,
+    .pcoded-navbar a {
+        color: #000 !important;
+    }
+
+    .navbar.header-navbar.pcoded-header .navbar-wrapper .navbar-container .nav-right > li .user-profile img {
+        border: 2px solid #000;
     }
 </style>
 

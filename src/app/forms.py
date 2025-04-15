@@ -3,10 +3,10 @@ from .models import *
 from django.contrib.auth.forms import UserCreationForm
 
 
-class BookingForm(forms.ModelForm):
+class EnrollForm(forms.ModelForm):
     class Meta:
-        model = Booking
-        fields = ('bookingnumber', 'status',)
+        model = Enroll
+        fields = ('enrollnumber', 'status',)
 
 # forms.py
 
@@ -14,4 +14,4 @@ class BookingForm(forms.ModelForm):
 class PaymentForm(forms.ModelForm):
     class Meta:
         model = Payment
-        fields = ['user', 'booking', 'transaction_uuid', 'amount', 'status', 'payment_method', 'signature', 'success_url', 'failure_url']
+        fields = ['user', 'enroll', 'transaction_uuid', 'amount', 'status', 'payment_method', 'signature', 'success_url', 'failure_url']

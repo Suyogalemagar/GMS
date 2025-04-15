@@ -301,9 +301,9 @@
                 <h4>{{i.price}}</h4>
                 <h4>{{i.packageduration}}</h4>
                 <p>{{i.description|safe}}</p>
-                <form method="post" action="/apply-booking/{{i.id}}/">
+                <form method="post" action="/apply-enrolled/{{i.id}}/">
                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger px-3">Booking Now</button>
+                    <button type="submit" class="btn btn-danger px-3">Enrolled Now</button>
                 </form>
             </div>
         </div>
