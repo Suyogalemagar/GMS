@@ -319,10 +319,10 @@ def enrolled_detail(request, pid):
         status = request.POST['status']
         data.status = status
         data.save()
-        Paymenthistory.objects.create(Enroll=data, price=price, status=status)
+        Paymenthistory.objects.create(enroll=data, price=price, status=status)
         messages.success(request, "Action Updated")
         return redirect('enrolled_detail', pid)
-    payment = Paymenthistory.objects.filter(Enroll=data)
+    payment = Paymenthistory.objects.filter(enroll=data)
     if request.user.is_staff:
         return render(request, "admin/admin_enrolled_detail.html", locals())
     else:
@@ -838,9 +838,6 @@ def mark_attendance(request, member_id, status):
     messages.error(request, "Invalid request method.")
     return redirect('member_attendance')
 
-
-
-
 from django.shortcuts import render
 from .models import MemberAttendance
 
@@ -848,5 +845,40 @@ def attendance_report(request):
     member_attendance = MemberAttendance.objects.all().select_related('member__user')
     return render(request, 'admin/attendance_report.html', {'member_attendance': member_attendance})
 
-    
+from django.shortcuts import render, redirect
+from django.core.mail import send_mail
+from django.contrib import messages
+from app.models import Signup, Trainer
+from django.conf import settings
 
+def send_notification(request):
+    if request.method == "POST":
+        subject = request.POST.get('subject')
+        message = request.POST.get('message')
+        recipient_type = request.POST.get('recipients')
+        custom_email = request.POST.get('email', None)
+
+        emails = []
+
+        if recipient_type == "members":
+            emails += [m.user.email for m in Signup.objects.select_related('user') if m.user and m.user.email]
+
+        elif recipient_type == "trainers":
+            emails += [t.email for t in Trainer.objects.all() if t.email]
+
+        elif recipient_type == "both":
+            emails += [m.user.email for m in Signup.objects.select_related('user') if m.user and m.user.email]
+            emails += [t.email for t in Trainer.objects.all() if t.email]
+
+        elif recipient_type == "specific" and custom_email:
+            emails.append(custom_email)
+
+        if emails:
+            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, emails, fail_silently=False)
+            messages.success(request, "Email(s) sent successfully.")
+        else:
+            messages.warning(request, "No valid recipients found.")
+
+        return redirect('send_notification')
+
+    return render(request, 'admin/send_notification.html')
