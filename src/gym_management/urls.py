@@ -59,8 +59,10 @@ urlpatterns = [
     path('mark_attendance/<int:member_id>/<str:status>/', mark_attendance, name='mark_attendance'),
     path('attendance_report/', attendance_report, name='attendance_report'),
     path('send_notification/', send_notification, name='send_notification'),
+    path('member/my-classes/', member_classes, name='my_classes'),
+    path('member/enrolled-plans/', enrolled_plans, name='enrolled_plans')
 
-    
 
+   
 
 ]+static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

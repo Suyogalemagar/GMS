@@ -1,0 +1,87 @@
+{% extends 'header.html' %}
+{% load static %}
+
+{% block main_content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-clipboard-list me-2"></i>My Enrolled Plans
+                    </h3>
+                </div>
+                <div class="card-body">
+                    {% if enrolled_plans %}
+                    <div class="row">
+                        {% for enroll in enrolled_plans %}
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">{{ enroll.package.titlename }}</h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item">
+                                            <strong>Package:</strong> 
+                                            {{ enroll.package.packagename.packagename }}
+                                        </li>
+                                        <li class="list-group-item">
+                                            <strong>Category:</strong> 
+                                            {{ enroll.package.category.categoryname }}
+                                        </li>
+                                        <li class="list-group-item">
+                                            <strong>Duration:</strong> 
+                                            {{ enroll.package.packageduration }}
+                                        </li>
+                                        <li class="list-group-item">
+                                            <strong>Price:</strong> 
+                                            रु{{ enroll.package.price }}
+                                        </li>
+                                        <li class="list-group-item">
+                                            <strong>Enrollment Date:</strong> 
+                                            {{ enroll.creationdate|date:"M d, Y" }}
+                                        </li>
+                                        <li class="list-group-item">
+                                            <strong>Status:</strong> 
+                                            <span class="badge bg-success">Active</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="card-footer bg-white">
+                                    <a href="#" class="btn btn-sm btn-outline-primary me-2">
+                                        <i class="fas fa-file-invoice"></i> View Invoice
+                                    </a>
+                                    <a href="#" class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-calendar-check"></i> Schedule
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        You don't have any active plans. Please enroll in a package to get started.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 10px;
+    }
+    .list-group-item {
+        padding: 0.75rem 1.25rem;
+        border-color: rgba(0,0,0,.05);
+    }
+    .badge {
+        font-size: 0.85rem;
+    }
+</style>
+{% endblock %}

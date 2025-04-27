@@ -882,3 +882,37 @@ def send_notification(request):
         return redirect('send_notification')
 
     return render(request, 'admin/send_notification.html')
+
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from .models import Class, Signup, Enroll
+
+@login_required
+def member_classes(request):
+    try:
+        member_profile = get_object_or_404(Signup, user=request.user)
+        enrolled_classes = Class.objects.filter(members=member_profile)
+        
+        context = {
+            'enrolled_classes': enrolled_classes,
+            'member': member_profile
+        }
+        return render(request, 'memberclass.html', context)
+        
+    except Exception as e:
+        return render(request, 'memberclass.html', {'error': str(e)})
+
+@login_required
+def enrolled_plans(request):
+    try:
+        member_profile = get_object_or_404(Signup, user=request.user)
+        enrolled_plans = Enroll.objects.filter(register=member_profile).select_related('package')
+        
+        context = {
+            'enrolled_plans': enrolled_plans,
+            'member': member_profile
+        }
+        return render(request, 'enrolled_plans.html', context)
+        
+    except Exception as e:
+        return render(request, 'enrolled_plans.html', {'error': str(e)})
