@@ -838,12 +838,48 @@ def mark_attendance(request, member_id, status):
     messages.error(request, "Invalid request method.")
     return redirect('member_attendance')
 
+def qr_attendance(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        try:
+            member = Signup.objects.get(user__username=username)
+
+            # Create a new Attendance record
+            MemberAttendance.objects.create(
+                member=member,
+                date=timezone.now().date(),
+                time=timezone.now().time(),
+                status="Present"
+            )
+
+            messages.success(request, f"Attendance marked Present for {username}!")
+            return redirect('qr_attendance')
+
+        except Signup.DoesNotExist:
+            messages.error(request, f"No member found with username {username}.")
+            return redirect('qr_attendance')
+    
+    return render(request, 'qr_attendance.html')
+
 from django.shortcuts import render
 from .models import MemberAttendance
+from django.db.models import Q
 
 def attendance_report(request):
-    member_attendance = MemberAttendance.objects.all().select_related('member__user')
-    return render(request, 'admin/attendance_report.html', {'member_attendance': member_attendance})
+    query = request.GET.get('q')
+    if query:
+        member_attendance = MemberAttendance.objects.filter(
+            Q(member__user__first_name__icontains=query) |
+            Q(member__user__last_name__icontains=query) |
+            Q(member__user__email__icontains=query)
+        ).order_by('-date', '-time')
+    else:
+        member_attendance = MemberAttendance.objects.all().order_by('-date', '-time')
+
+    return render(request, 'admin/attendance_report.html', {
+        'member_attendance': member_attendance,
+        'query': query
+    })
 
 from django.shortcuts import render, redirect
 from django.core.mail import send_mail

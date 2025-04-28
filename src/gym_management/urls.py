@@ -55,12 +55,14 @@ urlpatterns = [
     path('delete-user/', delete_user, name='delete_user'),
     path('trainer_registration/', trainer_registration, name='register_trainer'),
     path('delete_trainer/<int:trainer_id>/', delete_trainer, name='delete_trainer'), 
+    path('qr-attendance/', qr_attendance, name='qr_attendance'),
     path('member_attendance/', member_attendance, name='member_attendance'),
     path('mark_attendance/<int:member_id>/<str:status>/', mark_attendance, name='mark_attendance'),
     path('attendance_report/', attendance_report, name='attendance_report'),
     path('send_notification/', send_notification, name='send_notification'),
     path('member/my-classes/', member_classes, name='my_classes'),
     path('member/enrolled-plans/', enrolled_plans, name='enrolled_plans')
+
 
 
    
