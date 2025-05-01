@@ -3,99 +3,149 @@
 
 {% block main %}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<div class="page-header">
-    <div class="page-block">
-        <div class="row align-items-center">
-            <div class="col-md-8">
-                <div class="page-header-title">
-                    <h5 class="m-b-10">Send Email Notification</h5>
-                    <p class="m-b-0">Welcome to Gym Management System</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <ul class="breadcrumb-title">
-                    <li class="breadcrumb-item">
-                        <a href="{% url 'admin_home' %}"> <i class="fa fa-home"></i> </a>
-                    </li>
-                    <li class="breadcrumb-item"><a href="">Send Notification</a>
-                    </li>
-                    <li class="breadcrumb-item"><a href="">Send Email Notification</a></li>
-                    
-                </ul>
-            </div>
+<style>
+    /* Modern UI Improvements */
+    .email-notification-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        padding: 2rem;
+        margin-top: 1.5rem;
+    }
+    
+    .form-header {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .form-header h2 {
+        color: #333;
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    .form-header p {
+        color: #666;
+        margin: 0.5rem 0 0;
+    }
+    
+    .form-label {
+        font-weight: 500;
+        color: #444;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control, .form-select {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #ffc107;
+        box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
+    }
+    
+    textarea.form-control {
+        min-height: 150px;
+        resize: vertical;
+    }
+    
+    .btn-send {
+        background-color: #ffc107;
+        border: none;
+        padding: 0.75rem 2rem;
+        font-weight: 500;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        margin-top: 1rem;
+    }
+    
+    .btn-send:hover {
+        background-color: #e0a800;
+        transform: translateY(-2px);
+    }
+    
+    /* Specific email field transition */
+    #specificEmailDiv {
+        height: 0;
+        overflow: hidden;
+        transition: height 0.3s ease;
+    }
+    
+    #specificEmailDiv.show {
+        height: auto;
+        margin-bottom: 1rem;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .email-notification-card {
+            padding: 1.5rem;
+        }
+    }
+</style>
+
+<div class="container">
+    <div class="email-notification-card">
+        <div class="form-header">
+            <h2>Send Email Notification</h2>
+            <p>Send messages to members, trainers, or specific recipients</p>
         </div>
-    </div>
-</div>
+        
         <form method="POST" action="{% url 'send_notification' %}">
             {% csrf_token %}
-
-            <div class="mb-3">
+            
+            <div class="mb-4">
                 <label for="subject" class="form-label">Subject</label>
                 <input type="text" class="form-control" name="subject" id="subject" placeholder="Enter email subject" required>
             </div>
-
-            <div class="mb-3">
+            
+            <div class="mb-4">
                 <label for="message" class="form-label">Message</label>
                 <textarea class="form-control" name="message" id="message" rows="5" placeholder="Write your message here..." required></textarea>
             </div>
-
-            <div class="mb-3">
+            
+            <div class="mb-4">
                 <label for="recipient_type" class="form-label">Recipient Type</label>
                 <select class="form-select" name="recipients" id="recipient_type" onchange="toggleEmailInput()">
                     <option value="members">All Members</option>
                     <option value="trainers">All Trainers</option>
                     <option value="both">All Members & Trainers</option>
-                    <option value="specific">Specific Email</option>
+                    <option value="specific">Specific Email Address</option>
                 </select>
             </div>
-
-            <div class="mb-3" id="specificEmailDiv" style="display: none;">
-                <label for="email" class="form-label">Enter Email</label>
+            
+            <div id="specificEmailDiv">
+                <label for="email" class="form-label">Recipient Email</label>
                 <input type="email" class="form-control" name="email" id="email" placeholder="example@example.com">
             </div>
-
+            
             <div class="text-center">
-                <button type="submit" class="btn btn-warning px-4">Send Email</button>
+                <button type="submit" class="btn btn-send">Send Notification</button>
             </div>
         </form>
     </div>
 </div>
 
-<!-- Modal Message Popup -->
-{% if messages %}
-<div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 rounded-4 shadow-lg" style="background-color: #fff8dc; color: #333;">
-            <div class="modal-header border-0">
-                <h5 class="modal-title text-warning fw-semibold" id="messageModalLabel">Notification</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body text-center fs-5">
-                {% for message in messages %}
-                    {{ message }}
-                {% endfor %}
-            </div>
-            <div class="modal-footer justify-content-center border-0">
-                <button type="button" class="btn btn-warning px-4" data-bs-dismiss="modal">Okay</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        var modal = new bootstrap.Modal(document.getElementById('messageModal'));
-        modal.show();
-    });
-</script>
-{% endif %}
-
 <script>
     function toggleEmailInput() {
         const value = document.getElementById("recipient_type").value;
-        document.getElementById("specificEmailDiv").style.display = value === "specific" ? "block" : "none";
+        const emailDiv = document.getElementById("specificEmailDiv");
+        
+        if (value === "specific") {
+            emailDiv.classList.add("show");
+        } else {
+            emailDiv.classList.remove("show");
+        }
     }
+    
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleEmailInput(); // Set initial state
+    });
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 {% endblock %}

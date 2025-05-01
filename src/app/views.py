@@ -911,7 +911,7 @@ def send_notification(request):
 
         if emails:
             send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, emails, fail_silently=False)
-            messages.success(request, "Email(s) sent successfully.")
+            messages.success(request, "Email sent successfully.")
         else:
             messages.warning(request, "No valid recipients found.")
 
@@ -938,17 +938,125 @@ def member_classes(request):
     except Exception as e:
         return render(request, 'memberclass.html', {'error': str(e)})
 
-@login_required
+from django.shortcuts import get_object_or_404, render
+from django.utils import timezone
+from datetime import timedelta
+from .models import Signup, Enroll
+
+def parse_duration(duration_str):
+    """Convert duration string (like '1 month') to days"""
+    try:
+        if 'month' in duration_str.lower():
+            return 30  # Approximate 1 month as 30 days
+        elif 'year' in duration_str.lower():
+            return 365  # Approximate 1 year as 365 days
+        elif 'week' in duration_str.lower():
+            return 7  # 1 week as 7 days
+        else:
+            # Try to extract number of days if format is different
+            num = int(''.join(filter(str.isdigit, duration_str)))
+            return num
+    except:
+        return 30  # Default to 30 days if parsing fails
+
 def enrolled_plans(request):
     try:
         member_profile = get_object_or_404(Signup, user=request.user)
-        enrolled_plans = Enroll.objects.filter(register=member_profile).select_related('package')
+        enrolled_plans = Enroll.objects.filter(register=member_profile).select_related(
+            'package', 
+            'package__packagename', 
+            'package__category'
+        ).order_by('-creationdate')
         
+        today = timezone.now().date()
+        
+        for enroll in enrolled_plans:
+            # Convert duration to days
+            duration_days = parse_duration(enroll.package.packageduration)
+            
+            # Calculate remaining days
+            expiry_date = enroll.creationdate.date() + timedelta(days=duration_days)
+            remaining_days = (expiry_date - today).days
+            
+            # Prepare display values
+            enroll.remaining_days = remaining_days
+            enroll.expiry_date = expiry_date
+            enroll.duration_display = enroll.package.packageduration
+            
+            if remaining_days > 0:
+                enroll.status = "Active"
+                enroll.status_badge = "bg-success"
+                enroll.days_display = f"{remaining_days} day{'s' if remaining_days != 1 else ''} remaining"
+            elif remaining_days == 0:
+                enroll.status = "Expiring Today"
+                enroll.status_badge = "bg-warning"
+                enroll.days_display = "Expires today"
+            else:
+                enroll.status = "Expired"
+                enroll.status_badge = "bg-danger"
+                enroll.days_display = f"Expired {abs(remaining_days)} day{'s' if abs(remaining_days) != 1 else ''} ago"
+            
+            # Payment status
+            enroll.payment_status = "Paid" if enroll.status == 1 else "Unpaid"
+
         context = {
             'enrolled_plans': enrolled_plans,
-            'member': member_profile
+            'member': member_profile,
+            'today': today
         }
         return render(request, 'enrolled_plans.html', context)
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return render(request, 'enrolled_plans.html', {'error': str(e)})
+    
+from django.shortcuts import redirect
+from django.contrib import messages
+from .models import Enroll, Package
+
+def renew_plan(request, enroll_id):
+    try:
+        old_enroll = Enroll.objects.get(id=enroll_id, register__user=request.user)
+        
+        # Create new enrollment with same package
+        new_enroll = Enroll.objects.create(
+            package=old_enroll.package,
+            register=old_enroll.register,
+            status=1,  # Set as unpaid initially
+            # Other fields...
+        )
+        
+        # Redirect to payment page
+        messages.success(request, "Plan renewed successfully! Please complete the payment.")
+        return redirect('payment_form', enroll_id=new_enroll.id)
         
     except Exception as e:
-        return render(request, 'enrolled_plans.html', {'error': str(e)})
+        messages.error(request, f"Error renewing plan: {str(e)}")
+        return redirect('enrolled_plans')  
+    
+from django.shortcuts import render, get_object_or_404
+from django.contrib import messages
+from .models import Enroll, Payment
+
+def view_invoice(request, enroll_id):
+    try:
+        enroll = get_object_or_404(Enroll, id=enroll_id, register__user=request.user)
+        payment = Payment.objects.filter(enroll=enroll).first()
+        
+        # Determine payment status
+        payment_status = "Paid" if (payment and payment.status == 1) else "Unpaid"
+        status_badge = "bg-success" if payment_status == "Paid" else "bg-danger"
+        
+        context = {
+            'enroll': enroll,
+            'payment': payment,
+            'date': timezone.now().date(),
+            'payment_status': payment_status,
+            'status_badge': status_badge
+        }
+        
+        return render(request, 'invoice.html', context)
+        
+    except Exception as e:
+        messages.error(request, f"Error loading invoice: {str(e)}")
+        return redirect('enrolled_plans')

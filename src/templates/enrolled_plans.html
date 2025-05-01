@@ -12,49 +12,76 @@
                     </h3>
                 </div>
                 <div class="card-body">
+                    {% if error %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Error: {{ error }}
+                    </div>
+                    {% endif %}
+                    
                     {% if enrolled_plans %}
                     <div class="row">
                         {% for enroll in enrolled_plans %}
                         <div class="col-md-6 mb-4">
                             <div class="card h-100 border-0 shadow-sm">
-                                <div class="card-header bg-light">
+                                <div class="card-header bg-light d-flex justify-content-between align-items-center">
                                     <h5 class="mb-0">{{ enroll.package.titlename }}</h5>
+                                    <span class="badge {{ enroll.status_badge }}">{{ enroll.status }}</span>
                                 </div>
                                 <div class="card-body">
                                     <ul class="list-group list-group-flush">
-                                        <li class="list-group-item">
-                                            <strong>Package:</strong> 
-                                            {{ enroll.package.packagename.packagename }}
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span><strong>Package:</strong></span>
+                                            <span>{{ enroll.package.packagename.packagename }}</span>
                                         </li>
-                                        <li class="list-group-item">
-                                            <strong>Category:</strong> 
-                                            {{ enroll.package.category.categoryname }}
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span><strong>Category:</strong></span>
+                                            <span>{{ enroll.package.category.categoryname }}</span>
                                         </li>
-                                        <li class="list-group-item">
-                                            <strong>Duration:</strong> 
-                                            {{ enroll.package.packageduration }}
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span><strong>Duration:</strong></span>
+                                            <span>{{ enroll.duration_display }}</span>
                                         </li>
-                                        <li class="list-group-item">
-                                            <strong>Price:</strong> 
-                                            रु{{ enroll.package.price }}
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span><strong>Price:</strong></span>
+                                            <span>रु{{ enroll.package.price }}</span>
                                         </li>
-                                        <li class="list-group-item">
-                                            <strong>Enrollment Date:</strong> 
-                                            {{ enroll.creationdate|date:"M d, Y" }}
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span><strong>Enrollment Date:</strong></span>
+                                            <span>{{ enroll.creationdate|date:"M d, Y" }}</span>
                                         </li>
-                                        <li class="list-group-item">
-                                            <strong>Status:</strong> 
-                                            <span class="badge bg-success">Active</span>
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span><strong>Expiry Date:</strong></span>
+                                            <span>{{ enroll.expiry_date|date:"M d, Y" }}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span><strong>Status:</strong></span>
+                                            <span class="{% if enroll.remaining_days < 0 %}text-danger{% elif enroll.remaining_days <= 7 %}text-warning{% else %}text-success{% endif %}">
+                                                {{ enroll.days_display }}
+                                            </span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span><strong>Payment Status:</strong></span>
+                                            <span class="badge {% if enroll.payment_status == 'Paid' %}bg-success{% else %}bg-danger{% endif %}">
+                                                {{ enroll.payment_status }}
+                                            </span>
                                         </li>
                                     </ul>
                                 </div>
-                                <div class="card-footer bg-white">
-                                    <a href="#" class="btn btn-sm btn-outline-primary me-2">
-                                        <i class="fas fa-file-invoice"></i> View Invoice
+                                <div class="card-footer bg-white d-flex justify-content-between">
+                                    <a href="{% url 'view_invoice' enroll.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-file-invoice me-1"></i> View Invoice
                                     </a>
-                                    <a href="#" class="btn btn-sm btn-outline-success">
-                                        <i class="fas fa-calendar-check"></i> Schedule
+                                        
+                                    {% if enroll.status == "Active" %}
+                                    <a href="#" class="btn btn-sm btn-success">
+                                        <i class="fas fa-calendar-check me-1"></i> Schedule Session
                                     </a>
+                                    {% else %}
+                                    <a href="{% url 'renew_plan' enroll.id %}" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-sync-alt me-1"></i> Renew Plan
+                                    </a>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -75,6 +102,12 @@
 <style>
     .card {
         border-radius: 10px;
+        transition: transform 0.2s;
+        overflow: hidden;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
     }
     .list-group-item {
         padding: 0.75rem 1.25rem;
@@ -82,6 +115,29 @@
     }
     .badge {
         font-size: 0.85rem;
+        padding: 0.35em 0.65em;
+        font-weight: 500;
+    }
+    .bg-success {
+        background-color: #28a745!important;
+    }
+    .bg-danger {
+        background-color: #dc3545!important;
+    }
+    .bg-warning {
+        background-color: #ffc107!important;
+        color: #212529;
+    }
+    .text-warning {
+        color: #ffc107!important;
+        font-weight: 500;
+    }
+    .text-danger {
+        font-weight: 500;
+    }
+    .text-success {
+        color: #28a745!important;
+        font-weight: 500;
     }
 </style>
 {% endblock %}

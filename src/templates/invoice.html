@@ -1,0 +1,160 @@
+{% extends 'header.html' %}
+{% load static %}
+
+{% block main_content %}
+<div class="container py-4">
+    <div class="card shadow">
+        <!-- Card Header with Status Badge -->
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h3 class="mb-0">
+                <i class="fas fa-file-invoice me-2"></i>Invoice Details
+            </h3>
+            <span class="badge {% if payment_status == 'Paid' %}bg-success{% else %}bg-danger{% endif %} payment-status">
+                {{ payment_status }}
+            </span>
+        </div>
+        
+        <div class="card-body">
+            <!-- Invoice Header -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h4>Member Information</h4>
+                    <p><strong>Name:</strong> {{ enroll.register.user.get_full_name }}</p>
+                    <p><strong>Membership ID:</strong> {{ enroll.enrollnumber }}</p>
+                    <p><strong>Plan:</strong> {{ enroll.package.titlename }}</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <h4>Invoice #{{ enroll.id }}</h4>
+                    <p><strong>Date:</strong> {{ date|date:"M d, Y" }}</p>
+                    <p><strong>Enrolled:</strong> {{ enroll.creationdate|date:"M d, Y" }}</p>
+                </div>
+            </div>
+
+            <!-- Package Details Table -->
+            <div class="table-responsive mb-4">
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Description</th>
+                            <th>Duration</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{ enroll.package.packagename.packagename }}</td>
+                            <td>{{ enroll.package.packageduration }}</td>
+                            <td>रु{{ enroll.package.price }}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="text-end"><strong>Total Amount</strong></td>
+                            <td><strong>रु{{ enroll.package.price }}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Payment Status Section -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Payment Status</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if payment_status == "Paid" %}
+                                <p class="text-success">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    <strong>Payment Completed</strong>
+                                </p>
+                                {% if payment %}
+                                <p><strong>Paid On:</strong> {{ payment.creationdate|date:"M d, Y" }}</p>
+                                <p><strong>Transaction ID:</strong> {{ payment.transaction_uuid }}</p>
+                                {% endif %}
+                            {% else %}
+                                <p class="text-danger">
+                                    <i class="fas fa-times-circle me-2"></i>
+                                    <strong>Payment Pending</strong>
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Gym Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Gym Name:</strong> Fitness Pro</p>
+                            <p><strong>Address:</strong> 123 Fitness St, Kathmandu</p>
+                            <p><strong>Contact:</strong> 01-2345678</p>
+                            <p><strong>Email:</strong> info@fitnesspro.com</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Card Footer with Print Option -->
+        <div class="card-footer bg-white">
+            <button onclick="window.print()" class="btn btn-primary me-2">
+                <i class="fas fa-print me-1"></i> Print Invoice
+            </button>
+            <a href="{% url 'enrolled_plans' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back to Plans
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Payment Status Styling */
+    .payment-status {
+        font-size: 1.1rem;
+        padding: 0.5em 0.8em;
+        border-radius: 0.25rem;
+    }
+    
+    /* Table Styling */
+    .table {
+        margin-bottom: 1.5rem;
+    }
+    .table th {
+        background-color: #f8f9fa;
+    }
+    
+    /* Status Icons */
+    .text-success i, .text-danger i {
+        font-size: 1.2em;
+    }
+    
+    /* Print Styles */
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        .card, .card * {
+            visibility: visible;
+        }
+        .card {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            border: none;
+            box-shadow: none;
+            margin: 0;
+            padding: 0;
+        }
+        .card-footer, .btn {
+            display: none;
+        }
+        @page {
+            size: auto;
+            margin: 5mm;
+        }
+    }
+</style>
+{% endblock %}

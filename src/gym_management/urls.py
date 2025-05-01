@@ -61,7 +61,11 @@ urlpatterns = [
     path('attendance_report/', attendance_report, name='attendance_report'),
     path('send_notification/', send_notification, name='send_notification'),
     path('member/my-classes/', member_classes, name='my_classes'),
-    path('member/enrolled-plans/', enrolled_plans, name='enrolled_plans')
+    path('member/enrolled-plans/', enrolled_plans, name='enrolled_plans'),
+    path('plans/renew/<int:enroll_id>/', renew_plan, name='renew_plan'),
+    path('invoice/<int:enroll_id>/', view_invoice, name='view_invoice'),
+
+
 
 
 
