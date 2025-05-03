@@ -1,17 +1,26 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
-
-
 class Trainer(models.Model):
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('on_leave', 'On Leave'),
+        ('inactive', 'Inactive'),
+    ]
+    
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
     first_name = models.CharField(max_length=100, null=True)
     last_name = models.CharField(max_length=100, null=True)
-    email = models.EmailField(null=True, blank=True)  
+    email = models.EmailField(null=True, blank=True)
     phone = models.CharField(max_length=15)
     address = models.TextField()
-    experience = models.PositiveIntegerField(null=True, blank=True)  
-    is_verified = models.BooleanField(default=False) 
+    experience = models.PositiveIntegerField(null=True, blank=True)
+    is_verified = models.BooleanField(default=False)
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default='active'  # Set default to active
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

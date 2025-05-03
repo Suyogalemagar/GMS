@@ -64,7 +64,112 @@
     font-size: 12px;
     border-radius: 5px;
   }
+  .badge {
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .badge-success {
+    background-color: #28a745;
+    color: white;
+  }
+  .badge-danger {
+    background-color: #dc3545;
+    color: white;
+  }
+  .fa-spinner {
+    margin-right: 5px;
+  }
+  .toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    min-width: 250px;
+    padding: 15px;
+    background-color: #333;
+    color: white;
+    border-radius: 4px;
+    z-index: 1000;
+    display: none;
+  }
+  .toast-success {
+    background-color: #28a745;
+  }
+  .toast-error {
+    background-color: #dc3545;
+  }
+  /* Confirmation dialog styles */
+  .confirmation-dialog {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+  }
+  .confirmation-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    width: 400px;
+    max-width: 90%;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  }
+  .confirmation-buttons {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+    gap: 10px;
+  }
+  .confirmation-buttons button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .confirmation-buttons .confirm-no {
+    background-color: #6c757d;
+    color: white;
+  }
+  .confirmation-buttons .confirm-yes {
+    background-color: #dc3545;
+    color: white;
+  }
+  .confirmation-buttons .verify-yes {
+    background-color: #28a745;
+  }
 </style>
+
+<!-- Confirmation Dialogs -->
+<div id="deleteConfirmation" class="confirmation-dialog">
+    <div class="confirmation-content">
+        <h4>Confirm Deletion</h4>
+        <p>Are you sure you want to delete this user? This action cannot be undone.</p>
+        <div class="confirmation-buttons">
+            <button class="confirm-no">Cancel</button>
+            <button class="confirm-yes">Delete</button>
+        </div>
+    </div>
+</div>
+
+<div id="verifyConfirmation" class="confirmation-dialog">
+    <div class="confirmation-content">
+        <h4>Confirm Verification</h4>
+        <p>Are you sure you want to verify this user? An email notification will be sent.</p>
+        <div class="confirmation-buttons">
+            <button class="confirm-no">Cancel</button>
+            <button class="verify-yes">Verify</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast" class="toast"></div>
 
 <!-- Page-header start -->
 <div class="page-header">
@@ -105,13 +210,14 @@
                                         <table class="table">
                                             <thead>
                                             <tr>
-                                                <th><input type="checkbox" id="select-all" onclick="toggleSelectAll()"></th> <!-- Select all checkbox -->
+                                                <th><input type="checkbox" id="select-all" onclick="toggleSelectAll()"></th>
                                                 <th>#</th>
                                                 <th>Name</th>
                                                 <th>Email</th>
                                                 <th>Mobile</th>
                                                 <th>Address</th>
                                                 <th>Verified</th>
+                                                <th>Active Status</th>
                                                 <th>Action</th>
                                             </tr>
                                             </thead>
@@ -119,11 +225,11 @@
                                             <tbody>
                                             {% for i in data %}
                                             <tr>
-                                                <td><input type="checkbox" class="select-member" data-member-id="{{ i.user_id }}"></td> <!-- Individual member checkbox -->
+                                                <td><input type="checkbox" class="select-member" data-member-id="{{ i.user_id }}"></td>
                                                 <th scope="row">{{ forloop.counter }}</th>
                                                 <td>{{ i.user.first_name }} {{ i.user.last_name }}</td>
                                                 <td>
-                                                    <span id="email-{{ forloop.counter }}" class="password">{{ i.username }}</span>
+                                                    <span id="email-{{ forloop.counter }}" class="password">{{ i.user.email }}</span>
                                                     <button type="button" class="btn btn-success" id="email-btn-{{ forloop.counter }}" onclick="togglePassword('email-{{ forloop.counter }}', this.id)">
                                                         <i class="fa fa-eye"></i>
                                                     </button>
@@ -136,16 +242,22 @@
                                                 </td>
                                                 <td>{{ i.address }}</td>
                                                 <td>
-                                                    <!-- Verification with Yes/No buttons -->
                                                     {% if i.user.is_active %}
                                                     <span class="text-success">Yes</span>
                                                     {% else %}
-                                                    <button type="button" class="btn btn-success verified-button" data-choice="Yes" data-user-id="{{ i.user_id }}">Yes</button>
-<button type="button" class="btn btn-danger verified-button" data-choice="No" data-user-id="{{ i.user_id }}">No</button>
+                                                    <button type="button" class="btn btn-success verify-button" data-choice="Yes" data-user-id="{{ i.user_id }}" data-email="{{ i.user.email }}" data-name="{{ i.user.first_name }} {{ i.user.last_name }}">Yes</button>
+                                                    <button type="button" class="btn btn-danger" data-choice="No" data-user-id="{{ i.user_id }}">No</button>
                                                     {% endif %}
                                                 </td>
                                                 <td>
-                                                    <a href="{% url 'delete_user'  %}" onclick="return confirm('Are you sure you want to delete?')" class="btn btn-danger">Delete</a>
+                                                    {% if i.user.is_active %}
+                                                        <span class="badge badge-success">Active</span>
+                                                    {% else %}
+                                                        <span class="badge badge-danger">Inactive</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <button class="btn btn-danger delete-button" data-user-id="{{ i.user.id }}">Delete</button>
                                                 </td>
                                             </tr>
                                             {% endfor %}
@@ -162,106 +274,177 @@
     </div>
     <div id="styleSelector"></div>
 </div>
-
-<!-- JavaScript for verification and password toggle -->
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const buttons = document.querySelectorAll('.verified-button');
-    
-        buttons.forEach(button => {
-            button.addEventListener('click', function() {
-                const choice = this.getAttribute('data-choice');
-                const userId = this.getAttribute('data-user-id');
-                alert(userId);
-                fetch("{% url 'verify_user' %}", {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'X-CSRFToken': '{{ csrf_token }}' // Get the CSRF token from the template
-                    },
-                    body: JSON.stringify({
-                        user_id: userId,
-                        choice: choice // Can pass the choice if you want
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                         // Handle Success (e.g., show a message)
-                        alert('User verified successfully');
-                        // Do something if verification is successfull
-                         console.log('Verification successful', data)
-                    } else {
-                        // Handle Error (e.g., show an error message)
-                        alert('Error verifying user: ' + data.error);
-                        console.error('Error during verification:', data)
-                    }
-                })
-                .catch(error => {
-                    //Handle the error
-                    console.error('Error:', error);
-                    alert('An unexpected error occurred while verifying')
-                });
-            });
-        });
-    });
-function togglePassword(element_id, btnId){
-    var elementData = document.getElementById(element_id);
-    var elementBtn = document.getElementById(btnId);
-
-    if (elementData.classList.contains("password")) {
-        elementData.classList.remove("password");
-        elementData.classList.add("text");
-        elementBtn.children[0].classList.add("fa-eye-slash");
-        elementBtn.children[0].classList.remove("fa-eye");
-    } else {
-        elementData.classList.remove("text");
-        elementData.classList.add("password");
-        elementBtn.children[0].classList.remove("fa-eye-slash");
-        elementBtn.children[0].classList.add("fa-eye");
+    // Toast notification function
+    function showToast(message, isSuccess) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.className = isSuccess ? 'toast toast-success' : 'toast toast-error';
+        toast.style.display = 'block';
+        
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 3000);
     }
-}
 
-// Select all members checkbox functionality
-function toggleSelectAll() {
-    var selectAll = document.getElementById('select-all');
-    var memberCheckboxes = document.querySelectorAll('.select-member');
-    memberCheckboxes.forEach(checkbox => {
-        checkbox.checked = selectAll.checked;
-    });
-}
+    // Variables to store current action data
+    let currentUserIdToDelete = null;
+    let currentUserIdToVerify = null;
+    let currentVerifyEmail = null;
+    let currentVerifyName = null;
 
-document.addEventListener("DOMContentLoaded", function () {
-    document.querySelectorAll(".verified-checkbox").forEach(checkbox => {
-        checkbox.addEventListener("change", function () {
-            const userId = this.dataset.userId;
-
-            fetch("{% url 'verify_user' %}", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value // Get the CSRF token from the page
-                },
-                body: JSON.stringify({ user_id: userId })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert("User verified successfully!");
-                    this.disabled = true; // Disable checkbox after verification
-                } else {
-                    alert("Error verifying user: " + (data.error || 'Unknown error'));
-                    this.checked = false; // Uncheck if verification fails
-                }
-            })
-            .catch(error => {
-                console.error("Error:", error);
-                alert("Something went wrong. Please check the console for more details.");
-                this.checked = false;
-            });
+    // Delete functionality
+    document.querySelectorAll('.delete-button').forEach(button => {
+        button.addEventListener('click', function() {
+            currentUserIdToDelete = this.getAttribute('data-user-id');
+            document.getElementById('deleteConfirmation').style.display = 'flex';
         });
     });
-});
+
+    // Verify functionality
+    document.querySelectorAll('.verify-button').forEach(button => {
+        button.addEventListener('click', function() {
+            currentUserIdToVerify = this.getAttribute('data-user-id');
+            currentVerifyEmail = this.getAttribute('data-email');
+            currentVerifyName = this.getAttribute('data-name');
+            document.getElementById('verifyConfirmation').style.display = 'flex';
+        });
+    });
+
+    // Confirmation dialog buttons
+    document.querySelectorAll('.confirm-no').forEach(button => {
+        button.addEventListener('click', function() {
+            document.getElementById('deleteConfirmation').style.display = 'none';
+            document.getElementById('verifyConfirmation').style.display = 'none';
+            currentUserIdToDelete = null;
+            currentUserIdToVerify = null;
+        });
+    });
+
+    document.querySelector('.confirm-yes').addEventListener('click', function() {
+        document.getElementById('deleteConfirmation').style.display = 'none';
+        if (currentUserIdToDelete) {
+            deleteUser(currentUserIdToDelete);
+        }
+    });
+
+    document.querySelector('.verify-yes').addEventListener('click', function() {
+        document.getElementById('verifyConfirmation').style.display = 'none';
+        if (currentUserIdToVerify) {
+            verifyUser(currentUserIdToVerify, currentVerifyEmail, currentVerifyName);
+        }
+    });
+
+    // Close dialogs when clicking outside
+    document.querySelectorAll('.confirmation-dialog').forEach(dialog => {
+        dialog.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.style.display = 'none';
+                currentUserIdToDelete = null;
+                currentUserIdToVerify = null;
+            }
+        });
+    });
+
+    
+    function deleteUser(userId) {
+        fetch("{% url 'delete_user' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                user_id: userId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('User deleted successfully', true);
+                setTimeout(() => location.reload(), 3200); 
+            } else {
+                showToast('Error: ' + (data.error || 'Failed to delete user'), false);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('An unexpected error occurred', false);
+        });
+    }
+
+    function verifyUser(userId, email, name) {
+        const row = document.querySelector(`.verify-button[data-user-id="${userId}"]`).closest('tr');
+        const button = row.querySelector('.verify-button');
+        
+        // Show loading state
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Processing...';
+        button.disabled = true;
+        
+        fetch("{% url 'verify_user' %}", {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                user_id: userId,
+                choice: "Yes",
+                email: email,
+                name: name
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update the Verified column
+                const verifiedCell = row.querySelector('td:nth-child(7)');
+                verifiedCell.innerHTML = '<span class="text-success">Yes</span>';
+                
+                // Update the Active Status column
+                const statusCell = row.querySelector('td:nth-child(8)');
+                statusCell.innerHTML = '<span class="badge badge-success">Active</span>';
+                
+                showToast(`User verified successfully! Notification sent to ${email}`, true);
+            } else {
+                button.innerHTML = originalText;
+                button.disabled = false;
+                showToast(data.error || 'Error verifying user', false);
+            }
+        })
+        .catch(error => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+            showToast('An unexpected error occurred', false);
+            console.error('Error:', error);
+        });
+    }
+
+    function togglePassword(element_id, btnId) {
+        var elementData = document.getElementById(element_id);
+        var elementBtn = document.getElementById(btnId);
+
+        if (elementData.classList.contains("password")) {
+            elementData.classList.remove("password");
+            elementData.classList.add("text");
+            elementBtn.children[0].classList.add("fa-eye-slash");
+            elementBtn.children[0].classList.remove("fa-eye");
+        } else {
+            elementData.classList.remove("text");
+            elementData.classList.add("password");
+            elementBtn.children[0].classList.remove("fa-eye-slash");
+            elementBtn.children[0].classList.add("fa-eye");
+        }
+    }
+
+    function toggleSelectAll() {
+        var selectAll = document.getElementById('select-all');
+        var memberCheckboxes = document.querySelectorAll('.select-member');
+        memberCheckboxes.forEach(checkbox => {
+            checkbox.checked = selectAll.checked;
+        });
+    }
 </script>
 
 {% endblock %}

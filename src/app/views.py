@@ -573,9 +573,13 @@ def trainer_login(request):
             return redirect("trainer_login")
     print("no i am here")
     return render(request, "trainer_login.html")
+import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-import json
+from django.core.mail import send_mail
+from django.conf import settings
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 
 @csrf_exempt
 def verify_user(request):
@@ -583,12 +587,38 @@ def verify_user(request):
         try:
             data = json.loads(request.body)
             user_id = data.get("user_id")
+            choice = data.get("choice", "Yes")  # Get the verification choice
+            
             user = User.objects.get(id=user_id)
-            print(user)
-            user.is_active = 1
-            user.save()
-            return JsonResponse({"success": True})
-        except Signup.DoesNotExist:
+            
+            if choice == "Yes":
+                user.is_active = True
+                user.save()
+                
+                # Send verification email
+                subject = "Your Account Has Been Verified"
+                html_message = render_to_string('accountverifyemail.html', {
+                    'user': user,
+                    'site_name': "Gym Managament System"  # Change this to your gym's name
+                })
+                plain_message = strip_tags(html_message)
+                from_email = settings.DEFAULT_FROM_EMAIL
+                to_email = user.email
+                
+                send_mail(
+                    subject,
+                    plain_message,
+                    from_email,
+                    [to_email],
+                    html_message=html_message,
+                    fail_silently=False
+                )
+                
+                return JsonResponse({"success": True, "message": "User verified and notification sent"})
+            else:
+                return JsonResponse({"success": False, "message": "Verification denied"})
+                
+        except User.DoesNotExist:
             return JsonResponse({"success": False, "error": "User not found"})
         except Exception as e:
             return JsonResponse({"success": False, "error": str(e)})
@@ -609,13 +639,6 @@ def get_users(request):
             for user in users
         ]
         return JsonResponse(user_list, safe=False)
-import json
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from .models import Signup
-
-
-
 
 # views.py
 from django.http import JsonResponse
@@ -691,9 +714,15 @@ def delete_trainer(request, trainer_id):
     except Trainer.DoesNotExist:
         return JsonResponse({"success": False, "error": "Trainer not found"})
     
+from django.core.mail import send_mail
+from django.conf import settings
+from django.contrib import messages
+
 def verify_trainer(request):
+    if request.method != 'POST':
+        return HttpResponseBadRequest("Invalid request method.")
+    
     trainer_id = request.POST.get('trainer_id')
-    print(trainer_id)
     
     if not trainer_id:
         return HttpResponseBadRequest("Trainer ID is required.")
@@ -705,16 +734,42 @@ def verify_trainer(request):
 
     trainer = get_object_or_404(Trainer, user_id=trainer_id)
     
-    # Toggle the verification status
-    trainer.is_verified = not trainer.is_verified
-    trainer.save()
+    if not trainer.is_verified:
+        # Verify the trainer and set status to active
+        trainer.is_verified = True
+        trainer.status = 'active'  # Add this line to set status
+        trainer.save()
+        
+        # Send verification email
+        subject = 'Your Trainer Account Has Been Verified'
+        message = f"""
+        Hello {trainer.first_name},
+        
+        Your trainer account at {settings.SITE_NAME} has been verified by the admin.
+        Your account status is now Active.
+        
+        You can now access all trainer features on our platform.
+        
+        Thank you,
+        {settings.SITE_NAME} Team
+        """
+        
+        try:
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [trainer.user.email],
+                fail_silently=False,
+            )
+            messages.success(request, f'Trainer {trainer.user.get_full_name()} has been verified and status set to Active.')
+        except Exception as e:
+            messages.warning(request, f'Trainer verified but email could not be sent: {str(e)}')
+    else:
+        messages.info(request, f'Trainer {trainer.user.get_full_name()} is already verified.')
     
-    # Redirect to the trainer registration page or wherever you want
-    return redirect('reg_trainer')
+    return redirect('admin/reg_trainer.html')
 
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from .models import Class, Trainer, Signup
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages

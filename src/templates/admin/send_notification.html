@@ -2,7 +2,12 @@
 {% load static %}
 
 {% block main %}
+<!-- CKEditor 5 CDN -->
+<script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
+
+<!-- Bootstrap CSS -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
 <style>
     /* Modern UI Improvements */
     .email-notification-card {
@@ -48,9 +53,45 @@
         box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
     }
     
-    textarea.form-control {
-        min-height: 150px;
-        resize: vertical;
+    /* CKEditor 5 Customization */
+    .ck-editor__editable {
+        min-height: 300px;
+        border-radius: 0 0 8px 8px !important;
+    }
+    
+    .ck.ck-editor {
+        margin-bottom: 1rem;
+    }
+    
+    .ck.ck-toolbar {
+        border-radius: 8px 8px 0 0 !important;
+        border: 1px solid #ddd !important;
+        border-bottom: none !important;
+        background: #f8f9fa !important;
+    }
+    
+    .ck.ck-editor__main>.ck-editor__editable {
+        border: 1px solid #ddd !important;
+        border-top: none !important;
+    }
+    
+    .ck.ck-button:not(.ck-disabled):hover, 
+    .ck.ck-button.ck-on, 
+    .ck.ck-dropdown__button.ck-on:hover, 
+    .ck.ck-dropdown__button.ck-on {
+        background: rgba(255, 193, 7, 0.2) !important;
+    }
+    
+    /* Specific email field transition */
+    #specificEmailDiv {
+        height: 0;
+        overflow: hidden;
+        transition: height 0.3s ease;
+    }
+    
+    #specificEmailDiv.show {
+        height: auto;
+        margin-bottom: 1rem;
     }
     
     .btn-send {
@@ -68,18 +109,6 @@
         transform: translateY(-2px);
     }
     
-    /* Specific email field transition */
-    #specificEmailDiv {
-        height: 0;
-        overflow: hidden;
-        transition: height 0.3s ease;
-    }
-    
-    #specificEmailDiv.show {
-        height: auto;
-        margin-bottom: 1rem;
-    }
-    
     /* Responsive adjustments */
     @media (max-width: 768px) {
         .email-notification-card {
@@ -92,7 +121,7 @@
     <div class="email-notification-card">
         <div class="form-header">
             <h2>Send Email Notification</h2>
-            <p>Send messages to members, trainers, or specific recipients</p>
+            
         </div>
         
         <form method="POST" action="{% url 'send_notification' %}">
@@ -105,7 +134,9 @@
             
             <div class="mb-4">
                 <label for="message" class="form-label">Message</label>
-                <textarea class="form-control" name="message" id="message" rows="5" placeholder="Write your message here..." required></textarea>
+                <div id="editor-container">
+                    <textarea class="form-control" name="message" id="message" placeholder="Write your message here..." required></textarea>
+                </div>
             </div>
             
             <div class="mb-4">
@@ -131,21 +162,72 @@
 </div>
 
 <script>
+    // Initialize CKEditor 5
+    ClassicEditor
+        .create(document.querySelector('#message'), {
+            toolbar: {
+                items: [
+                    'heading', '|',
+                    'bold', 'italic', 'underline', 'strikethrough', '|',
+                    'fontColor', 'fontBackgroundColor', '|',
+                    'bulletedList', 'numberedList', '|',
+                    'alignment', 'outdent', 'indent', '|',
+                    'link', 'imageUpload', 'insertTable', 'blockQuote', '|',
+                    'undo', 'redo', '|',
+                    'sourceEditing'
+                ],
+                shouldNotGroupWhenFull: true
+            },
+            language: 'en',
+            image: {
+                toolbar: [
+                    'imageTextAlternative',
+                    'toggleImageCaption',
+                    'imageStyle:inline',
+                    'imageStyle:block',
+                    'imageStyle:side'
+                ]
+            },
+            table: {
+                contentToolbar: [
+                    'tableColumn',
+                    'tableRow',
+                    'mergeTableCells',
+                    'tableProperties',
+                    'tableCellProperties'
+                ]
+            },
+            licenseKey: '',
+        })
+        .then(editor => {
+            window.editor = editor;
+            
+            // Update textarea before form submission
+            const form = document.querySelector('form');
+            form.addEventListener('submit', () => {
+                document.querySelector('#message').value = editor.getData();
+            });
+        })
+        .catch(error => {
+            console.error('Oops, something went wrong!');
+            console.error(error);
+        });
+
+    // Function to toggle email input visibility
     function toggleEmailInput() {
-        const value = document.getElementById("recipient_type").value;
+        const recipientType = document.getElementById("recipient_type");
         const emailDiv = document.getElementById("specificEmailDiv");
         
-        if (value === "specific") {
+        if (recipientType.value === "specific") {
             emailDiv.classList.add("show");
         } else {
             emailDiv.classList.remove("show");
         }
     }
     
-    // Initialize on load
+    // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
-        toggleEmailInput(); // Set initial state
+        toggleEmailInput();
     });
 </script>
-
 {% endblock %}
