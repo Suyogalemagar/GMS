@@ -281,6 +281,8 @@
 </section>
 
 <!-- ***** Testimonials Starts ***** -->
+ 
+{% if request.user.is_authenticated %}
 <section class="section" id="trainers">
     <div class="container">
         <div class="row">
@@ -312,11 +314,7 @@
         </div>
     </div>
 </section>
-<!-- ***** Testimonials Ends ***** -->
-{% block body %}
-
-
-{% endblock %}
+{% endif%}
 
 <!-- ***** Admin Area Ends ***** -->
 

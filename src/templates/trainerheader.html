@@ -13,7 +13,7 @@
 
     <!-- Additional CSS Files -->
     <link rel="stylesheet" type="text/css" href="{% static 'assets/css/bootstrap.min.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'assets/css/font-awesome.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="{% static 'assets/css/templatemo-training-studio.css' %}">
     <style>
         /* Dropdown styles */
@@ -95,7 +95,7 @@
 <div class="container-fluid position-relative nav-bar p-0">
     <div class="position-relative px-lg-5" style="z-index: 9;">
         <nav class="navbar navbar-expand-lg bg-secondary navbar-dark py-3 py-lg-3 pl-3 pl-lg-5">
-            <a href="" >
+            <a href="{% url 'trainer_page'%}" >
                 <h2 class="text-uppercase text-warning mb-1">Gym <span class="text-white">Management System</span>
                 </h2>
             </a>
@@ -104,20 +104,20 @@
             </button>
             <div class="collapse navbar-collapse justify-content-between px-3" id="navbarCollapse">
                 <div class="navbar-nav ml-auto py-0">
-                    <a href="#" class="nav-item nav-link active">Home</a>
+                    <a href="{% url 'trainer_page'%}" class="nav-item nav-link active">Home</a>
                     <a href="#trainer_page" class="nav-item nav-link">Classes</a>
                     <a href="#chat" class="nav-item nav-link">Chats</a>
                     <a href="#contact-us" class="nav-item nav-link">Contact</a>
                     {% if request.user.is_authenticated %}
                     <div class="nav-item dropdown ml-lg-3">
                         <a class="nav-link dropdown-toggle text-warning" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fa fa-user mr-1"></i> {{ request.user.username }}
+                            <i class="fa fa-user mr-1"></i> {{ request.user.first_name }}
                         </a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <a class="dropdown-item" href="/user_profile/">
+                            <a class="dropdown-item" href="{% url 'trainer_profile' %}">
                                 <i class="fa fa-id-card"></i> My Profile
                             </a>
-                            <a class="dropdown-item" href="/user_change_password/">
+                            <a class="dropdown-item" href="{% url 'trainer_change_password_page' %}">
                                 <i class="fa fa-key"></i> Change Password
                             </a>
                             <div class="dropdown-divider"></div>

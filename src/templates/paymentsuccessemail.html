@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Payment Confirmation</title>
+</head>
+<body>
+    <h2>Thank You for Your Payment!</h2>
+    <p>Dear {{ member_name }},</p>
+    
+    <p>Your payment for <strong>{{ package_name }}</strong> has been successfully processed.</p>
+    
+    <h3>Enrollment Details:</h3>
+    <ul>
+        <li><strong>Plan:</strong> {{ package_name }}</li>
+        <li><strong>Amount Paid:</strong> रु{{ amount }}</li>
+        <li><strong>Transaction Date:</strong> {{ transaction_date }}</li>
+        <li><strong>Expiry Date:</strong> {{ expiry_date }}</li>
+    </ul>
+    
+    <p>You can now access all the features of your plan. Log in to your account to get started.</p>
+    
+    <p>Best regards,<br>
+    Your Gym Management System Team</p>
+</body>
+</html>

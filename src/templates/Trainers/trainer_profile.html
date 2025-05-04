@@ -1,0 +1,71 @@
+{% extends 'trainerheader.html' %}
+
+{% load static %}
+
+{% block main_content %}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card shadow-lg border-0 rounded-4">
+                <div class="card-header bg-warning text-white text-center rounded-top-4">
+                    <h4 class="mb-0"> Trainer Profile</h4>
+                </div>
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        
+                        <h4 class="mt-3 mb-0">{{ trainer.user.get_full_name }}</h4>
+                        <p class="text-muted small">Certified Trainer</p>
+                    </div>
+
+                    <form method="post" action="{% url 'update_trainer_profile' %}">
+                        {% csrf_token %}
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" name="first_name" id="firstName" placeholder="First Name" value="{{ trainer.first_name }}">
+                                    <label for="firstName">First Name</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" name="last_name" id="lastName" placeholder="Last Name" value="{{ trainer.last_name }}">
+                                    <label for="lastName">Last Name</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input type="email" class="form-control" id="email" placeholder="Email" value="{{ trainer.user.email }}" readonly>
+                            <label for="email">Email</label>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" name="phone" id="phone" placeholder="Phone" value="{{ trainer.phone }}">
+                            <label for="phone">Phone</label>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <textarea class="form-control" name="address" id="address" placeholder="Address" style="height: 100px;">{{ trainer.address }}</textarea>
+                            <label for="address">Address</label>
+                        </div>
+
+                        <div class="form-floating mb-4">
+                            <input type="number" class="form-control" name="experience" id="experience" placeholder="Experience" value="{{ trainer.experience }}">
+                            <label for="experience">Experience (years)</label>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <button type="submit" class="btn btn-warning px-4">Update</button>
+                            <a href="{% url 'trainer_change_password_page' %}" class="btn btn-outline-secondary">
+                                Change Password
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

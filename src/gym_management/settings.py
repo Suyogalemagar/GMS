@@ -107,6 +107,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
+# Site settings
+SITE_NAME = 'Gym management system'
+BASE_URL = 'http://127.0.0.1:8000/'
+
 from decouple import config
 
 # Email Backend (Production - SMTP via Gmail)

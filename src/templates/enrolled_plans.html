@@ -26,7 +26,13 @@
                             <div class="card h-100 border-0 shadow-sm">
                                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
                                     <h5 class="mb-0">{{ enroll.package.titlename }}</h5>
-                                    <span class="badge {{ enroll.status_badge }}">{{ enroll.status }}</span>
+                                    <span class="badge {% if enroll.remaining_days > 0 %}bg-success{% else %}bg-secondary{% endif %} py-2 px-3">
+                                        {% if enroll.remaining_days > 0 %}
+                                            <i class="fas fa-check-circle me-1"></i> Active
+                                        {% else %}
+                                            <i class="fas fa-times-circle me-1"></i> Inactive
+                                        {% endif %}
+                                    </span>
                                 </div>
                                 <div class="card-body">
                                     <ul class="list-group list-group-flush">
@@ -60,12 +66,14 @@
                                                 {{ enroll.days_display }}
                                             </span>
                                         </li>
-                                        <li class="list-group-item d-flex justify-content-between">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
                                             <span><strong>Payment Status:</strong></span>
-                                            <span class="badge {% if enroll.payment_status == 'Paid' %}bg-success{% else %}bg-danger{% endif %}">
-                                                {{ enroll.payment_status }}
+                                            <span class="badge {% if enroll.status == 1 %}bg-success{% else %}bg-danger{% endif %} rounded-pill py-2 px-3">
+                                                <i class="fas {% if enroll.status == 1 %}fa-check-circle{% else %}fa-times-circle{% endif %} me-1"></i>
+                                                {{ enroll.get_status_display }}
                                             </span>
                                         </li>
+                                        
                                     </ul>
                                 </div>
                                 <div class="card-footer bg-white d-flex justify-content-between">
@@ -139,5 +147,19 @@
         color: #28a745!important;
         font-weight: 500;
     }
+    /* Added for payment status */
+    .rounded-pill {
+        border-radius: 50rem!important;
+    }
 </style>
+
+<script>
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
 {% endblock %}

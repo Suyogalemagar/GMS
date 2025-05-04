@@ -70,21 +70,37 @@ class Package(models.Model):
         return self.titlename
 
 # Enroll Model
-STATUS = ((1, "Paid"),)
+
 class Enroll(models.Model):
+    STATUS = (
+        (1, "Paid"),
+        (0, "Unpaid"),
+    )
     package = models.ForeignKey(Package, on_delete=models.CASCADE, null=True, blank=True)
     register = models.ForeignKey(Signup, on_delete=models.CASCADE, null=True, blank=True)
     enrollnumber = models.CharField(max_length=100, null=True, blank=True)
     status = models.IntegerField(choices=STATUS, default=1)
     creationdate = models.DateTimeField(auto_now_add=True)
 
+    @property
+    def payment_status_display(self):
+        return self.get_status_display()
+
 # Payment History Model
+STATUS = (
+    (1, "Paid"),
+    (0, "Unpaid"),
+)
 class Paymenthistory(models.Model):
     user = models.ForeignKey(Signup, on_delete=models.CASCADE, null=True, blank=True)
     enroll = models.ForeignKey(Enroll, on_delete=models.CASCADE, null=True, blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     status = models.IntegerField(choices=STATUS, default=1)
+    payment_method = models.CharField(max_length=50, default="eSewa")  # Add payment_method field
     creationdate = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Paymenthistory {self.enroll} - {self.user.username if self.user else 'Unknown'}"
 
 # Payment Model
 class Payment(models.Model):
@@ -93,7 +109,7 @@ class Payment(models.Model):
     transaction_uuid = models.CharField(max_length=255, unique=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.IntegerField(choices=STATUS, default=1)
-    payment_method = models.CharField(max_length=50, default="eSewa")  
+    payment_method = models.CharField(max_length=50, default="eSewa")
     signature = models.CharField(max_length=255)
     success_url = models.URLField()
     failure_url = models.URLField()
@@ -101,6 +117,10 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"Payment {self.transaction_uuid} - {self.user.username if self.user else 'Unknown'}"
+    
+    def get_status_display(self):
+        # You already have status choices, so this will automatically return a display value
+        return dict(STATUS).get(self.status, 'Unknown Status')  # Ensure it's readable
 
 class Class(models.Model):
     name = models.CharField(max_length=100)

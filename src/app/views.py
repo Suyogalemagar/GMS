@@ -456,69 +456,68 @@ def apply_enrolled(request, pid):
 
     # Return an HttpResponse with a hidden form for POST redirect
     return render(request, 'hidden_post_form.html', context)
-
 from django.shortcuts import render, redirect
 from django.http import HttpResponseBadRequest, JsonResponse
 from django.urls import reverse
 from django.conf import settings
-from .models import Payment
+from django.contrib.auth.models import User
+from .models import Payment, Paymenthistory, Enroll, Signup
 import uuid
 import hashlib
 import base64
 import hmac
+
 # Function to generate the signature for eSewa
 def generate_signature(amount, transaction_uuid, product_code, secret):
     hash_string = f"total_amount={amount},transaction_uuid={transaction_uuid},product_code={product_code}"
-
-    # Encode both secret and hash_string to bytes using utf-8
     secret_bytes = secret.encode('utf-8')
     hash_string_bytes = hash_string.encode('utf-8')
-    
     hmac_sha256 = hmac.new(secret_bytes, hash_string_bytes, hashlib.sha256)
     digest = hmac_sha256.digest()
     signature = base64.b64encode(digest).decode('utf-8')
-    print(signature)
-    # Encode in Base64
     return signature
 
 def payment_view(request):
-    print(request)
     if request.method == 'POST':
-        # Get form data
-        amount = float(request.POST.get('amount'))  # Convert to float for calculations
+        amount = float(request.POST.get('amount'))
         full_name = request.POST.get('full_name')
         phone_number = request.POST.get('phone_number')
+        enrolled_id = request.POST.get("enrolled_id")
 
-        # Generate a unique transaction UUID
         transaction_uuid = str(uuid.uuid4())
-
-        # Secret key (stored securely in settings)
         secret = settings.ESEWA_SECRET_KEY
 
-        # Ensure correct total amount
         tax_amount = 0
         service_charge = 0
         delivery_charge = 0
         total_amount = amount + tax_amount + service_charge + delivery_charge
 
-        # Generate eSewa signature
         signature = generate_signature(total_amount, transaction_uuid, "EPAYTEST", secret)
-        print(signature)
-        user=User.objects.get(username=request.user)
-        enrollment=Enroll.objects.get(id=request.POST.get("enrolled_id"))
-        print(enrollment)
-        print(request.user.id)
-        # Save payment data in the database
+
+        user = request.user
+        enrollment = Enroll.objects.get(id=enrolled_id)
+
+        # Save to Payment model
         payment = Payment.objects.create(
-            user=request.user,
+            user=user,
+            enroll=enrollment,
             transaction_uuid=transaction_uuid,
             amount=total_amount,
             signature=signature,
             success_url=request.build_absolute_uri(reverse('payment_success')),
             failure_url=request.build_absolute_uri(reverse('payment_failure')),
         )
-        print(payment)
-        # Prepare data to send to the payment form
+
+        # Save to Paymenthistory model
+        signup_user = Signup.objects.get(user=user)
+        Paymenthistory.objects.create(
+            user=signup_user,
+            enroll=enrollment,
+            price=total_amount,
+            status=1  # Assuming 1 = Paid
+        )
+
+        # Data to send to eSewa
         esewa_data = {
             'amount': payment.amount,
             'tax_amount': tax_amount,
@@ -536,10 +535,49 @@ def payment_view(request):
         }
 
         return render(request, 'payment/payment_form.html', esewa_data)
-    
+
     return render(request, 'payment/payment_form.html')
 
 def payment_success(request):
+    # Get the latest payment for the current user
+    try:
+        payment = Payment.objects.filter(user=request.user).latest('creationdate')
+        enrollment = payment.enroll
+        package = enrollment.package
+        
+        # Prepare email content
+        subject = f'Payment Confirmation for {package.titlename}'
+        
+        context = {
+            'member_name': f"{request.user.first_name} {request.user.last_name}",
+            'package_name': package.titlename,
+            'amount': payment.amount,
+            'transaction_date': payment.creationdate.strftime("%B %d, %Y %H:%M"),
+            'expiry_date': enrollment.expiry_date.strftime("%B %d, %Y") if hasattr(enrollment, 'expiry_date') else "N/A",
+        }
+        
+        # Render HTML content
+        html_message = render_to_string('paymentsuccessemail.html', context)
+        plain_message = strip_tags(html_message)
+        
+        # Send email
+        send_mail(
+            subject=subject,
+            message=plain_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[request.user.email],
+            html_message=html_message,
+            fail_silently=False,
+        )
+        
+        # Update payment status if needed
+        payment.status = 1  # Paid
+        payment.save()
+        
+    except Exception as e:
+        # Log error but don't show to user
+        print(f"Error sending confirmation email: {e}")
+    
     return render(request, 'payment/payment_success.html')
 
 def payment_failure(request):
@@ -705,72 +743,150 @@ def trainer_registration(request):
 def reg_trainer(request):
     trainers = Trainer.objects.all()  # Get all trainers
     return render(request, 'admin/reg_trainer.html', {'trainers': trainers})
-
+from django.views.decorators.http import require_POST
+@require_POST
+@login_required
 def delete_trainer(request, trainer_id):
     try:
         trainer = Trainer.objects.get(id=trainer_id)
+        # Delete associated user as well if needed
+        user = trainer.user
         trainer.delete()
+        user.delete()
         return JsonResponse({"success": True})
     except Trainer.DoesNotExist:
-        return JsonResponse({"success": False, "error": "Trainer not found"})
-    
-from django.core.mail import send_mail
-from django.conf import settings
-from django.contrib import messages
+        return JsonResponse({"success": False, "error": "Trainer not found"}, status=404)
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=500)
 
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import update_session_auth_hash
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from .models import Trainer
+
+@login_required
+def trainer_profile(request):
+    try:
+        trainer = Trainer.objects.get(user=request.user)
+    except Trainer.DoesNotExist:
+        messages.error(request, "Trainer profile not found")
+        return redirect('home')
+    
+    return render(request, 'Trainers/trainer_profile.html', {'trainer': trainer})
+
+@login_required
+def update_trainer_profile(request):
+    if request.method == 'POST':
+        trainer = Trainer.objects.get(user=request.user)
+        
+        # Update trainer fields
+        trainer.first_name = request.POST.get('first_name')
+        trainer.last_name = request.POST.get('last_name')
+        trainer.phone = request.POST.get('phone')
+        trainer.address = request.POST.get('address')
+        trainer.experience = request.POST.get('experience')
+        trainer.save()
+        
+        # Update user fields
+        user = request.user
+        user.first_name = request.POST.get('first_name')
+        user.last_name = request.POST.get('last_name')
+        user.save()
+        
+        messages.success(request, "Profile updated successfully")
+    
+    return redirect('trainer_profile')
+
+@login_required
+def trainer_change_password_page(request):
+    return render(request, 'Trainers/trainer_change_password.html')
+
+@login_required
+def trainer_change_password(request):
+    if request.method == 'POST':
+        current_password = request.POST.get('current_password')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+        
+        user = request.user
+        
+        if not user.check_password(current_password):
+            messages.error(request, "Current password is incorrect")
+        elif new_password != confirm_password:
+            messages.error(request, "New passwords don't match")
+        else:
+            user.set_password(new_password)
+            user.save()
+            update_session_auth_hash(request, user)  # Important to keep user logged in
+            messages.success(request, "Password changed successfully")
+            return redirect('trainer_profile')
+        
+        return redirect('trainer_change_password_page')
+    
+    return redirect('trainer_profile')    
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+
+@require_POST
+@login_required
 def verify_trainer(request):
     if request.method != 'POST':
-        return HttpResponseBadRequest("Invalid request method.")
+        return JsonResponse({"success": False, "error": "Invalid request method"}, status=400)
     
     trainer_id = request.POST.get('trainer_id')
     
     if not trainer_id:
-        return HttpResponseBadRequest("Trainer ID is required.")
+        return JsonResponse({"success": False, "error": "Trainer ID is required"}, status=400)
         
     try:
         trainer_id = int(trainer_id)
     except ValueError:
-        return HttpResponseBadRequest("Invalid trainer ID format.")
+        return JsonResponse({"success": False, "error": "Invalid trainer ID format"}, status=400)
 
     trainer = get_object_or_404(Trainer, user_id=trainer_id)
     
     if not trainer.is_verified:
-        # Verify the trainer and set status to active
         trainer.is_verified = True
-        trainer.status = 'active'  # Add this line to set status
+        trainer.status = 'active'
         trainer.save()
         
-        # Send verification email
-        subject = 'Your Trainer Account Has Been Verified'
-        message = f"""
-        Hello {trainer.first_name},
+        # Prepare email context
+        context = {
+            'trainer': trainer,
+            'site_name': settings.SITE_NAME,
+            'login_url': settings.BASE_URL + '/login'  # Add BASE_URL to your settings
+        }
         
-        Your trainer account at {settings.SITE_NAME} has been verified by the admin.
-        Your account status is now Active.
+        # Render HTML content
+        html_content = render_to_string('Trainers/trainer_verified.html', context)
+        text_content = strip_tags(html_content)  # Fallback text version
         
-        You can now access all trainer features on our platform.
-        
-        Thank you,
-        {settings.SITE_NAME} Team
-        """
+        # Create email
+        subject = f'Your {settings.SITE_NAME} Trainer Account Has Been Verified'
+        from_email = settings.DEFAULT_FROM_EMAIL
+        to_email = [trainer.user.email]
         
         try:
-            send_mail(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [trainer.user.email],
-                fail_silently=False,
-            )
-            messages.success(request, f'Trainer {trainer.user.get_full_name()} has been verified and status set to Active.')
+            msg = EmailMultiAlternatives(subject, text_content, from_email, to_email)
+            msg.attach_alternative(html_content, "text/html")
+            msg.send()
+            
+            return JsonResponse({
+                "success": True,
+                "message": f"Trainer {trainer.user.get_full_name()} has been verified and notification sent."
+            })
         except Exception as e:
-            messages.warning(request, f'Trainer verified but email could not be sent: {str(e)}')
+            return JsonResponse({
+                "success": True,
+                "warning": f"Trainer verified but email could not be sent: {str(e)}"
+            })
     else:
-        messages.info(request, f'Trainer {trainer.user.get_full_name()} is already verified.')
-    
-    return redirect('admin/reg_trainer.html')
-
-
+        return JsonResponse({
+            "success": False,
+            "info": f"Trainer {trainer.user.get_full_name()} is already verified."
+        })
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from .models import Class, Trainer, Signup
@@ -898,11 +1014,28 @@ def qr_attendance(request):
         username = request.POST.get('username')
         try:
             member = Signup.objects.get(user__username=username)
+            today = timezone.now().date()
 
-            # Create a new Attendance record
+            # Check for at least one active and paid enrollment
+            enrollments = Enroll.objects.filter(register=member)
+            has_valid_plan = False
+
+            for enroll in enrollments:
+                duration_days = parse_duration(enroll.package.packageduration).days
+                expiry_date = enroll.creationdate.date() + timedelta(days=duration_days)
+
+                if expiry_date >= today and enroll.status == 1:  # status == 1 means Paid
+                    has_valid_plan = True
+                    break
+
+            if not has_valid_plan:
+                messages.error(request, f"{username} does not have an active and paid plan. Attendance not marked.")
+                return redirect('qr_attendance')
+
+            # Mark attendance
             MemberAttendance.objects.create(
                 member=member,
-                date=timezone.now().date(),
+                date=today,
                 time=timezone.now().time(),
                 status="Present"
             )
@@ -913,7 +1046,7 @@ def qr_attendance(request):
         except Signup.DoesNotExist:
             messages.error(request, f"No member found with username {username}.")
             return redirect('qr_attendance')
-    
+
     return render(request, 'qr_attendance.html')
 
 from django.shortcuts import render
@@ -936,39 +1069,103 @@ def attendance_report(request):
         'query': query
     })
 
+
 from django.shortcuts import render, redirect
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
 from django.contrib import messages
 from app.models import Signup, Trainer
 from django.conf import settings
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 
 def send_notification(request):
     if request.method == "POST":
-        subject = request.POST.get('subject')
-        message = request.POST.get('message')
-        recipient_type = request.POST.get('recipients')
-        custom_email = request.POST.get('email', None)
+        subject = request.POST.get('subject', '').strip()
+        message = request.POST.get('message', '').strip()
+        recipient_type = request.POST.get('recipient_type')
+        specific_email = request.POST.get('specific_email', '').strip()
 
-        emails = []
+        # Validate required fields
+        if not subject:
+            messages.error(request, "Subject is required.")
+            return redirect('send_notification')
+        if not message:
+            messages.error(request, "Message content is required.")
+            return redirect('send_notification')
 
-        if recipient_type == "members":
-            emails += [m.user.email for m in Signup.objects.select_related('user') if m.user and m.user.email]
+        emails = set()
 
-        elif recipient_type == "trainers":
-            emails += [t.email for t in Trainer.objects.all() if t.email]
+        try:
+            if recipient_type == "members":
+                emails.update(
+                    m.user.email for m in Signup.objects.select_related('user')
+                    .filter(user__email__isnull=False)
+                    .exclude(user__email='')
+                )
+            elif recipient_type == "trainers":
+                emails.update(
+                    t.email for t in Trainer.objects.filter(
+                        email__isnull=False
+                    ).exclude(email='')
+                )
+            elif recipient_type == "both":
+                emails.update(
+                    m.user.email for m in Signup.objects.select_related('user')
+                    .filter(user__email__isnull=False)
+                    .exclude(user__email='')
+                )
+                emails.update(
+                    t.email for t in Trainer.objects.filter(
+                        email__isnull=False
+                    ).exclude(email='')
+                )
+            elif recipient_type == "specific":
+                if not specific_email:
+                    messages.error(request, "Please provide an email address for specific recipient.")
+                    return redirect('send_notification')
+                try:
+                    validate_email(specific_email)
+                    emails.add(specific_email)
+                except ValidationError:
+                    messages.error(request, "Please enter a valid email address.")
+                    return redirect('send_notification')
+            else:
+                messages.error(request, "Invalid recipient type selected.")
+                return redirect('send_notification')
 
-        elif recipient_type == "both":
-            emails += [m.user.email for m in Signup.objects.select_related('user') if m.user and m.user.email]
-            emails += [t.email for t in Trainer.objects.all() if t.email]
+            if not emails:
+                messages.warning(request, "No valid recipients found.")
+                return redirect('send_notification')
 
-        elif recipient_type == "specific" and custom_email:
-            emails.append(custom_email)
+            # Send email
+            email_list = list(emails)
+            html_message = render_to_string('admin/notification.html', {
+                'subject': subject,
+                'message': message,
+                'site_name': getattr(settings, 'SITE_NAME', 'Our Gym')
+            })
+            
+            email = EmailMultiAlternatives(
+                subject,
+                strip_tags(html_message),
+                settings.DEFAULT_FROM_EMAIL,
+                [],
+                bcc=email_list,
+            )
+            email.attach_alternative(html_message, "text/html")
+            email.send(fail_silently=False)
+            
+            messages.success(
+                request, 
+                f"Email successfully sent to {len(email_list)} recipient(s)."
+            )
 
-        if emails:
-            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, emails, fail_silently=False)
-            messages.success(request, "Email sent successfully.")
-        else:
-            messages.warning(request, "No valid recipients found.")
+        except Exception as e:
+            messages.error(request, "Failed to send email. Please try again later.")
+            if settings.DEBUG:
+                print(f"Email error: {str(e)}")
 
         return redirect('send_notification')
 
@@ -1039,20 +1236,21 @@ def enrolled_plans(request):
             enroll.duration_display = enroll.package.packageduration
             
             if remaining_days > 0:
-                enroll.status = "Active"
+                enroll.plan_status = "Active"
                 enroll.status_badge = "bg-success"
                 enroll.days_display = f"{remaining_days} day{'s' if remaining_days != 1 else ''} remaining"
             elif remaining_days == 0:
-                enroll.status = "Expiring Today"
+                enroll.plan_status = "Expiring Today"
                 enroll.status_badge = "bg-warning"
                 enroll.days_display = "Expires today"
             else:
-                enroll.status = "Expired"
+                enroll.plan_status = "Expired"
                 enroll.status_badge = "bg-danger"
                 enroll.days_display = f"Expired {abs(remaining_days)} day{'s' if abs(remaining_days) != 1 else ''} ago"
             
-            # Payment status
+            # Correct way to get payment status
             enroll.payment_status = "Paid" if enroll.status == 1 else "Unpaid"
+            enroll.payment_status_badge = "bg-success" if enroll.status == 1 else "bg-danger"
 
         context = {
             'enrolled_plans': enrolled_plans,
