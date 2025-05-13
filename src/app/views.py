@@ -44,19 +44,19 @@ def user_login(request):
         pwd = request.POST['password']
         user = authenticate(username=email, password=pwd)
         if user:
-            if user.is_active ==0:
-                messages.error(request,"not verified")
-            if user.is_staff:
-                messages.success(request, "Invalid User")
+            if user.is_active == 0:
+                messages.error(request, "Account not verified")
+            elif user.is_staff:
+                messages.error(request, "Invalid User")
                 return redirect('user_login')
             else:
                 login(request, user)
                 messages.success(request, "User Login Successful")
                 return redirect('index')
         else:
-            messages.success(request, "Invalid User")
+            messages.error(request, "Invalid credentials")
             return redirect('user_login')
-    return render(request, 'user_login.html', locals())
+    return render(request, 'user_login.html')
 
 
 
@@ -275,6 +275,7 @@ def admin_login(request):
         if user is not None:
             # If the user exists and credentials are correct, log the user in
             login(request, user)
+            messages.success(request, "Login successful! Welcome back!")
             return redirect('admin_home')  # Redirect to the admin home page
         else:
             # If authentication fails, show an error message
@@ -282,7 +283,6 @@ def admin_login(request):
             return redirect('adminlogin')  # Stay on the login page
 
     return render(request, 'admin_login.html')
-
 
 
 @login_required
@@ -587,30 +587,51 @@ from django.contrib.auth import authenticate, login
 from django.shortcuts import render, redirect
 from django.contrib import messages
 
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login
+
+# views.py
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.shortcuts import render, redirect
+
 def trainer_login(request):
     if request.method == "POST":
-        username = request.POST.get("username")  
+        username = request.POST.get("username")
         password = request.POST.get("password")
-        print(username,password)
+        
         if not username or not password:
             messages.error(request, "Username and Password are required.")
             return redirect("trainer_login")
 
         user = authenticate(request, username=username, password=password)
-        trainer= Trainer.objects.get(user_id=user.id)
-        print(trainer)
-        if( trainer.is_verified==0):
-            messages.error(request,"Not verified")
-            return render(request,"trainer_login.html")
-        if user is not None:
-            print("i am here")
-            login(request, user)
-            return redirect("trainer_page")  
-        else:
+        
+        if user is None:
             messages.error(request, "Invalid username or password.")
             return redirect("trainer_login")
-    print("no i am here")
+            
+        try:
+            trainer = Trainer.objects.get(user_id=user.id)
+            if not trainer.is_verified:
+                messages.error(request, "Account not verified. Please contact admin.")
+                return redirect("trainer_login")
+            
+            login(request, user)
+            request.session['show_popup'] = True  # Add this line
+            messages.success(request, "Login successful! Welcome back!")
+            return redirect("trainer_page")
+            
+        except Trainer.DoesNotExist:
+            messages.error(request, "Trainer account not found.")
+            return redirect("trainer_login")
+
     return render(request, "trainer_login.html")
+
+def trainer_logout(request):
+    logout(request)
+    messages.success(request, "Logged out successfully!")
+    return redirect("trainer_login")
 import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -987,12 +1008,36 @@ import datetime
 
 def mark_attendance(request, member_id, status):
     if request.method == 'POST':
+        # Validate status
+        valid_statuses = ['Present', 'Absent']
+        status = status.capitalize()
+        
+        if status not in valid_statuses:
+            messages.error(request, "Invalid attendance status.")
+            return redirect('member_attendance')
+
         member = get_object_or_404(Signup, id=member_id)
         now = datetime.datetime.now()
         date = now.date()
         time = now.time()
 
-        # Optional: avoid duplicate entries
+        # Check if member has an active plan
+        active_plan = False
+        today = date
+        
+        for enrollment in member.enroll_set.all():  # Assuming related_name='enroll_set'
+            duration_days = parse_duration(enrollment.package.packageduration).days
+            expiry_date = enrollment.creationdate.date() + timedelta(days=duration_days)
+            
+            if expiry_date >= today and enrollment.status == 1:  # status == 1 means Paid
+                active_plan = True
+                break
+        
+        if not active_plan:
+            messages.error(request, f"{member.user.get_full_name()} doesn't have an active paid plan.")
+            return redirect('member_attendance')
+
+        # Check for existing entry
         if MemberAttendance.objects.filter(member=member, date=date).exists():
             messages.warning(request, f"{member.user.get_full_name()} is already marked today.")
             return redirect('member_attendance')  
@@ -1004,7 +1049,7 @@ def mark_attendance(request, member_id, status):
             status=status
         )
         messages.success(request, f"{member.user.get_full_name()} marked as {status}.")
-        return redirect('member_attendance') 
+        return redirect('member_attendance')
 
     messages.error(request, "Invalid request method.")
     return redirect('member_attendance')
@@ -1313,3 +1358,28 @@ def view_invoice(request, enroll_id):
     except Exception as e:
         messages.error(request, f"Error loading invoice: {str(e)}")
         return redirect('enrolled_plans')
+
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from .models import MemberAttendance, Signup
+from django.db.models import Count
+
+@login_required
+def view_attendance(request):
+    member_profile = get_object_or_404(Signup, user=request.user)
+    
+    # Get all attendance records ordered by date
+    attendance_records = MemberAttendance.objects.filter(
+        member=member_profile
+    ).order_by('-date')
+    
+    # Get total count
+    total_attendance = attendance_records.count()
+    
+    context = {
+        'attendance_records': attendance_records,
+        'total_attendance': total_attendance,
+    }
+    return render(request, 'Memberview_attendance.html', context)
+

@@ -1,11 +1,55 @@
 {% load static %}
 
 <html lang="en">
-
+  
 <head>
+
+    <style>
+        /* Toast Notification Styles */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1100;
+        }
+        .toast {
+            min-width: 300px;
+            border: none;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            color: white;
+            margin-bottom: 10px;
+        }
+        .toast-success { background-color: #28a745 !important; }
+        .toast-error { background-color: #dc3545 !important; }
+        .toast-warning { 
+            background-color: #ffc107 !important; 
+            color: #212529 !important;
+        }
+        .toast-info { background-color: #17a2b8 !important; }
+        .toast-header {
+            border-bottom: none;
+            background-color: rgba(0,0,0,0.1);
+            color: inherit;
+            padding: 0.75rem 1rem;
+        }
+        .btn-close {
+            filter: brightness(0) invert(1);
+            opacity: 1;
+            background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e") center/1em auto no-repeat;
+        }
+        .toast-warning .btn-close {
+            filter: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23212529'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e");
+        }
+        .toast-body { padding: 1rem; }
+    </style>
     <title>Gym Management System</title>
     <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
     <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+
+    <!-- Required for toasts to work -->
+<link rel="stylesheet" type="text/css" href="{% static 'assets1/css/bootstrap/css/bootstrap.min.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'assets1/icon/font-awesome/css/font-awesome.min.css' %}">
 
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
@@ -38,6 +82,23 @@
 </head>
 
 <body>
+ <!-- Toast Notifications -->
+<div class="toast-container">
+    {% for message in messages %}
+    <div class="toast toast-{{ message.tags }}" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <strong class="me-auto">
+                <i class="fa {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% elif message.tags == 'warning' %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %} me-2"></i>
+                
+            </strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+            {{ message }}
+        </div>
+    </div>
+    {% endfor %}
+</div>
 <!-- Pre-loader start -->
 <div class="theme-loader">
     <div class="loader-track">
@@ -454,13 +515,19 @@
     .navbar.header-navbar.pcoded-header .navbar-wrapper .navbar-container .nav-right > li .user-profile img {
         border: 2px solid #000;
     }
+    .toast-header {
+        padding: 0.75rem 1rem;
+        border-bottom: none;
+        background-color: rgba(0,0,0,0.1);
+        color: inherit;
+    }
+    .toast-header strong {
+        display: flex;
+        align-items: center;
+    }
 </style>
 
-{% for i in messages %}
-<script>
-alert('{{i}}');
-</script>
-{% endfor %}
+
 <!-- Required Jquery -->
 <script type="text/javascript" src="{% static 'assets1/js/jquery/jquery.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'assets1/js/jquery-ui/jquery-ui.min.js' %}"></script>
@@ -492,4 +559,36 @@ alert('{{i}}');
 <script type="text/javascript" src="{% static 'assets1/pages/dashboard/custom-dashboard.js' %}"></script>
 <script type="text/javascript" src="{% static 'assets1/js/script.js' %}"></script>
 </body>
+<script>
+    // Initialize toast notifications with 5-second auto-hide
+    document.addEventListener("DOMContentLoaded", function() {
+        // Initialize Bootstrap toasts
+        var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+        var toastOptions = {
+            delay: 5000, // 5 seconds
+            autohide: true // Ensure auto-hide is enabled
+        };
+        
+        toastElList.forEach(function(toastEl) {
+            // Create toast instance
+            var toast = new bootstrap.Toast(toastEl, toastOptions);
+            
+            // Show toast
+            toast.show();
+            
+            // Remove from DOM after hiding
+            toastEl.addEventListener('hidden.bs.toast', function() {
+                toastEl.remove();
+            });
+            
+            // Ensure close button works
+            var closeButton = toastEl.querySelector('.btn-close');
+            if (closeButton) {
+                closeButton.addEventListener('click', function() {
+                    toast.hide();
+                });
+            }
+        });
+    });
+</script>
 </html>

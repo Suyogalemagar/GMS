@@ -3,6 +3,8 @@ from django.urls import path
 from app.views import *
 from django.conf.urls.static import static
 from django.conf import settings
+from django.urls import path
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -52,6 +54,7 @@ urlpatterns = [
     path('verify_trainer/',verify_trainer, name='verify_trainer'),
     path('trainer_login/', trainer_login, name='trainer_login'),
     path('trainer_page/',trainer_dashboard,name="trainer_page"),
+    path('trainer_logout/', trainer_logout, name='trainer_logout'),
     path('trainer_profile/', trainer_profile, name='trainer_profile'),
     path('update_trainer_profile/', update_trainer_profile, name='update_trainer_profile'),
     path('trainer_change_password/', trainer_change_password_page, name='trainer_change_password_page'),
@@ -68,9 +71,11 @@ urlpatterns = [
     path('member/enrolled-plans/', enrolled_plans, name='enrolled_plans'),
     path('plans/renew/<int:enroll_id>/', renew_plan, name='renew_plan'),
     path('invoice/<int:enroll_id>/', view_invoice, name='view_invoice'),
+    path('member/viewattendance/', view_attendance, name='view_attendance'),
 
 
 
+    
 
 
    

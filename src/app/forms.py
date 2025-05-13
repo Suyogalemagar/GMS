@@ -8,10 +8,8 @@ class EnrollForm(forms.ModelForm):
         model = Enroll
         fields = ('enrollnumber', 'status',)
 
-# forms.py
-
-
 class PaymentForm(forms.ModelForm):
     class Meta:
         model = Payment
         fields = ['user', 'enroll', 'transaction_uuid', 'amount', 'status', 'payment_method', 'signature', 'success_url', 'failure_url']
+

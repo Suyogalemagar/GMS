@@ -133,10 +133,20 @@ class Class(models.Model):
     def __str__(self):
         return f"{self.name} - {self.trainer.first_name if self.trainer else 'Unassigned'}"
 class MemberAttendance(models.Model):
+    STATUS_CHOICES = [
+        ('Present', 'Present'),
+        ('Absent', 'Absent'),
+    ]
+    
     member = models.ForeignKey('Signup', on_delete=models.CASCADE)
     date = models.DateField(default=timezone.now)
     time = models.TimeField(default=timezone.now)
-    status = models.CharField(max_length=10, choices=[('Present', 'Present'), ('Absent', 'Absent')])
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES)
+
+    def save(self, *args, **kwargs):
+        # Ensure status is properly capitalized to match choices
+        self.status = self.status.capitalize()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.member.user.username} - {self.date} - {self.status}"

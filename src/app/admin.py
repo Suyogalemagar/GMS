@@ -11,3 +11,5 @@ admin.site.register(Paymenthistory)
 admin.site.register(Trainer)
 admin.site.register(Class)
 admin.site.register(MemberAttendance)
+
+

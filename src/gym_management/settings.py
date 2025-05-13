@@ -45,7 +45,8 @@ ROOT_URLCONF = 'gym_management.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],  # Add this line
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],  
+        
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -53,6 +54,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                
             ],
         },
     },
@@ -90,7 +92,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kathmandu'
 
 USE_I18N = True
 
@@ -111,6 +113,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 SITE_NAME = 'Gym management system'
 BASE_URL = 'http://127.0.0.1:8000/'
 
+
 from decouple import config
 
 # Email Backend (Production - SMTP via Gmail)
@@ -121,4 +124,6 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config("EMAIL_USER")
 EMAIL_HOST_PASSWORD = config("EMAIL_PASS")
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+
 
