@@ -33,7 +33,9 @@
                                     </td>
                                     <td>
                                         {% if class.trainer %}
+                                        <a href="/trainer/profile/{{ class.trainer.id }}/">
                                             {{ class.trainer.first_name }} {{ class.trainer.last_name }}
+                                          </a>
                                         {% else %}
                                             <span class="text-muted">Not assigned</span>
                                         {% endif %}

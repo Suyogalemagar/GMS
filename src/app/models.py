@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.urls import reverse
 class Trainer(models.Model):
     STATUS_CHOICES = [
         ('active', 'Active'),
@@ -19,10 +20,14 @@ class Trainer(models.Model):
     status = models.CharField(
         max_length=10,
         choices=STATUS_CHOICES,
-        default='active'  # Set default to active
+        default='active'
     )
+    profile_url = models.URLField(max_length=200, blank=True, null=True)  # New field
+    profile_photo = models.ImageField(upload_to='trainer_photos/', blank=True, null=True)  # New field
     created_at = models.DateTimeField(auto_now_add=True)
-
+    def get_absolute_url(self):
+        return reverse('trainer_profile', args=[self.id])
+    
     def __str__(self):
         return self.user.username if self.user else "No User"
 
@@ -47,11 +52,13 @@ class Packagetype(models.Model):
 # Signup Model: Stores additional user information
 class Signup(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True)  # One-to-One link with User
+    profile_pic = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
     mobile = models.CharField(max_length=15, null=True)
     state = models.CharField(max_length=150, null=True)
     city = models.CharField(max_length=150, null=True)
     address = models.CharField(max_length=200, null=True)
     creationdate = models.DateTimeField(auto_now_add=True)
+    
 
     def __str__(self):
         return self.user.username  

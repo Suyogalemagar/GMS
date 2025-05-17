@@ -1,0 +1,61 @@
+{% extends 'header.html' %}
+{% load static %}
+
+{% block main_content %}
+<div class="container py-5">
+    <div class="card shadow-lg border-0 rounded-4">
+        <div class="card-header bg-warning text-white text-center rounded-top-4">
+            <h4 class="mb-0">Trainer Profile</h4>
+        </div>
+        <div class="card-body p-5">
+            <div class="row">
+                <div class="col-md-4 text-center">
+                    {% if trainer.profile_photo %}
+                        <img src="{{ trainer.profile_photo.url }}" class="rounded-circle mb-3" width="150" height="150" alt="Trainer Photo">
+                    {% else %}
+                        <img src="{% static 'images/default-profile.png' %}" class="rounded-circle mb-3" width="150" height="150" alt="Default Photo">
+                    {% endif %}
+                    <h4>{{ trainer.first_name }} {{ trainer.last_name }}</h4>
+                    <p class="text-muted small">
+                        <i class="fas fa-certificate text-warning"></i> Certified Trainer
+                    </p>
+                    <p class="text-muted">
+                        <span class="badge 
+                            {% if trainer.status == 'active' %}bg-success
+                            {% elif trainer.status == 'on_leave' %}bg-warning text-dark
+                            {% else %}bg-secondary
+                            {% endif %}">
+                            {{ trainer.get_status_display }}
+                        </span>
+                    </p>
+                    {% if trainer.profile_url %}
+                        <p>
+                            <a href="{{ trainer.profile_url }}" target="_blank" class="btn btn-outline-success btn-sm">
+                                WhatsApp Profile <i class="fab fa-whatsapp"></i>
+                            </a>
+                        </p>
+                    {% endif %}
+                </div>
+                <div class="col-md-8">
+                    <h5 class="mb-3"><i class="fas fa-info-circle"></i> About</h5>
+                    <p>{{ trainer.bio|default:"No bio available" }}</p>
+
+                    <h5 class="mt-4 mb-2"><i class="fas fa-phone"></i> Contact</h5>
+                    <p><strong>Email:</strong> {{ trainer.user.email }}</p>
+                    {% if trainer.phone %}
+                        <p><strong>Phone:</strong> {{ trainer.phone }}</p>
+                    {% endif %}
+
+                    <h5 class="mt-4 mb-2"><i class="fas fa-map-marker-alt"></i> Address</h5>
+                    <p>{{ trainer.address|default:"Not provided" }}</p>
+
+                    <h5 class="mt-4 mb-2"><i class="fas fa-briefcase"></i> Experience</h5>
+                    <p>{{ trainer.experience }} years</p>
+
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

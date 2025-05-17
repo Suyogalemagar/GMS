@@ -1,5 +1,4 @@
 {% extends 'trainerheader.html' %}
-
 {% load static %}
 
 {% block main_content %}
@@ -13,13 +12,46 @@
                 </div>
                 <div class="card-body p-5">
                     <div class="text-center mb-4">
-                        
+                        {% if trainer.profile_photo %}
+                            <img src="{{ trainer.profile_photo.url }}" alt="Profile Photo" class="rounded-circle mb-3" width="150" height="150">
+                        {% else %}
+                            <img src="{% static 'path/to/default/photo.jpg' %}" alt="Default Profile" class="rounded-circle mb-3" width="150" height="150">
+                        {% endif %}
                         <h4 class="mt-3 mb-0">{{ trainer.user.get_full_name }}</h4>
-                        <p class="text-muted small">Certified Trainer</p>
+                        <p class="text-muted small">Current Status: 
+                            <span class="badge 
+                                {% if trainer.status == 'active' %}bg-success
+                                {% elif trainer.status == 'on_leave' %}bg-warning text-dark
+                                {% else %}bg-secondary
+                                {% endif %}">
+                                {{ trainer.get_status_display }}
+                            </span>
+                        </p>
                     </div>
 
-                    <form method="post" action="{% url 'update_trainer_profile' %}">
+                    <form method="post" action="{% url 'update_trainer_profile' %}" enctype="multipart/form-data">
                         {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="profilePhoto" class="form-label">Profile Photo</label>
+                            <input class="form-control" type="file" id="profilePhoto" name="profile_photo" accept="image/*">
+                            {% if trainer.profile_photo %}
+                                <small class="text-muted">Current: {{ trainer.profile_photo.name }}</small>
+                            {% endif %}
+                        </div>
+                        <div class="form-floating mb-3">
+                            <select class="form-select" name="status" id="status">
+                                {% for value, label in trainer.STATUS_CHOICES %}
+                                    <option value="{{ value }}" {% if trainer.status == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <label for="status">Status</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="url" class="form-control" name="profile_url" id="profileUrl" placeholder="Profile URL" value="{{ trainer.profile_url|default_if_none:'' }}">
+                            <label for="profileUrl">Whatsapp Profile URL</label>
+                        </div>
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
                                 <div class="form-floating">
@@ -67,5 +99,46 @@
         </div>
     </div>
 </div>
+
+<style>
+    .badge {
+        font-size: 0.8rem;
+        font-weight: 500;
+        padding: 0.35em 0.65em;
+    }
+    .bg-success {
+        background-color: #28a745!important;
+    }
+    .bg-warning {
+        background-color: #ffc107!important;
+    }
+    .bg-secondary {
+        background-color: #6c757d!important;
+    }
+    .status-badge {
+        font-size: 0.8rem;
+        padding: 0.35em 0.65em;
+        border-radius: 0.25rem;
+    }
+    
+    .status-active {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    .status-on_leave {
+        background-color: #ffc107;
+        color: #212529;
+    }
+    
+    .status-inactive {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .form-select {
+        cursor: pointer;
+    }
+</style>
 
 {% endblock %}

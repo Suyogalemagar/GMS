@@ -1,186 +1,121 @@
 {% extends 'header.html' %}
-
 {% load static %}
 
 {% block main_content %}
-<style>
-    .profile-container {
-        background-color: #f8f9fa; /* Light gray background */
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-        margin-top: 20px;
-    }
 
-    .profile-form {
-        padding: 20px;
-    }
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card shadow-lg border-0 rounded-4">
+                <div class="card-header bg-warning text-white text-center rounded-top-4">
+                    <h4 class="mb-0">User Profile</h4>
+                </div>
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        {% if data.profile_pic %}
+                            <img src="{{ data.profile_pic.url }}" alt="Profile Photo" class="rounded-circle mb-3" width="150" height="150">
+                        {% else %}
+                            <img src="{% static 'assets/images/default-profile.jpg' %}" alt="Default Profile" class="rounded-circle mb-3" width="150" height="150">
+                        {% endif %}
+                        <h4 class="mt-3 mb-0">{{ data.user.get_full_name }}</h4>
+                    </div>
 
-    .form-control {
-        border-radius: 5px;
-        margin-bottom: 15px;
-        padding: 10px;
-        border: 1px solid #ced4da;
-    }
-
-    .form-control:focus {
-        outline: none;
-        border-color: #80bdff;
-        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); /* Bootstrap focus effect */
-    }
-
-    .profile-image {
-        width: 100%;
-        height: auto;
-        border-radius: 10px;
-        margin-bottom: 20px;
-        box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-    }
-
-    .update-button {
-        background-color: #28a745; /* Green color */
-        color: white;
-        border: none;
-        padding: 12px 20px;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
-
-    .update-button:hover {
-        background-color: #218838; /* Darker green on hover */
-    }
-
-    .profile-heading {
-        color: #343a40; /* Dark gray color */
-        margin-bottom: 20px;
-    }
-
-    .profile-section {
-        margin-bottom: 30px;
-    }
-
-    .input-group {
-        position: relative; /* Required for positioning the eye icon */
-    }
-
-    .input-group-append {
-        position: absolute;
-        right: 0;
-        top: 0;
-        bottom: 0;
-        z-index: 2;
-        display: flex;
-        align-items: center;
-        padding: .375rem .75rem;
-    }
-
-    .input-group-text {
-        background-color: transparent;
-        border: none;
-        cursor: pointer; /* Make it look clickable */
-    }
-</style>
-
-<!-- ***** Admin Area Starts ***** -->
-<section class="profile-section" id="admin">
-    <div class="container profile-container">
-        <h3 class="text-center profile-heading">User Profile</h3>
-        <hr/>
-        <div class="row">
-            <div class="col-lg-6 col-md-6 col-xs-12">
-                <img src="{% static 'assets/images/adminlogin.jpg' %}" class="profile-image" alt="User Profile Image">
-            </div>
-            <div class="col-lg-6 col-md-6 col-xs-12">
-                <div class="profile-form">
                     <form method="post" action="" enctype="multipart/form-data">
                         {% csrf_token %}
-                        <div class="form-group">
-                            <label for="firstname">First Name</label>
-                            <input type="text" class="form-control" id="firstname" name="firstname" placeholder="First Name" required value="{{data.user.first_name}}">
-                        </div>
-                        <div class="form-group">
-                            <label for="secondname">Last Name</label>
-                            <input type="text" class="form-control" id="secondname" name="secondname" placeholder="Last Name" required value="{{data.user.last_name}}">
+                        <div class="mb-3">
+                            <label for="profilePhoto" class="form-label">Profile Photo</label>
+                            <input class="form-control" type="file" id="profilePhoto" name="profile_pic" accept="image/*">
+                            {% if data.profile_pic %}
+                                <small class="text-muted">Current: {{ data.profile_pic.name }}</small>
+                            {% endif %}
                         </div>
 
-                         <div class="form-group">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" name="firstname" id="firstname" placeholder="First Name" value="{{ data.user.first_name }}" required>
+                                    <label for="firstname">First Name</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" name="secondname" id="secondname" placeholder="Last Name" value="{{ data.user.last_name }}" required>
+                                    <label for="secondname">Last Name</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input type="email" class="form-control" id="email" placeholder="Email" value="{{ data.user.username }}" readonly>
                             <label for="email">Email</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="email" name="email" placeholder="Enter Email" value="{{data.user.username}}" readonly>
-                                <div class="input-group-append">
-                                    <span class="input-group-text fa fa-eye toggle-password-2" id="email-eye" onclick="togglePassword2()"></span>
-                                </div>
-                            </div>
                         </div>
 
-                         <div class="form-group">
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" name="mobile" id="mobile" placeholder="Mobile" value="{{ data.mobile }}" required>
                             <label for="mobile">Mobile Number</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="mobile" name="mobile" placeholder="Mobile Number" value="{{data.mobile}}" readonly>
-                                <div class="input-group-append">
-                                    <span class="input-group-text fa fa-eye toggle-password" id="mobile-eye" onclick="togglePassword()"></span>
-                                </div>
-                            </div>
                         </div>
 
-
-                        <div class="form-group">
+                        <div class="form-floating mb-3">
+                            <textarea class="form-control" name="address" id="address" placeholder="Address" style="height: 100px;" required>{{ data.address }}</textarea>
                             <label for="address">Address</label>
-                            <input type="text" class="form-control" id="address" name="address" placeholder="Address" value="{{data.address}}" required>
                         </div>
-                        <button type="submit" class="btn update-button">Update</button>
+
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-lg btn-warning px-5 shadow-sm">
+                                <i class="fa fa-save me-2"></i>Update Profile
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
-</section>
+</div>
+
+<style>
+    .card {
+        border: none;
+    }
+    .card-header {
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    .rounded-4 {
+        border-radius: 1rem !important;
+    }
+    .rounded-top-4 {
+        border-top-left-radius: 1rem !important;
+        border-top-right-radius: 1rem !important;
+    }
+    .form-floating label {
+        color: #6c757d;
+    }
+    .form-control:focus, .form-select:focus {
+        box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
+        border-color: #ffc107;
+    }
+    .btn-warning {
+        background-color: #ffc107;
+        border-color: #ffc107;
+        color: #212529;
+        font-weight: 500;
+    }
+    .btn-warning:hover {
+        background-color: #e0a800;
+        border-color: #d39e00;
+    }
+</style>
 
 {% if error == "no" %}
     <script>
-        alert('Logged In Successfully');
-        window.location=('{% url 'admin_home' %}');
+        alert('Profile updated successfully');
     </script>
 {% endif %}
 
 {% if error == "yes" %}
     <script>
-        alert('Invalid Credentials, Please try again');
+        alert('Error updating profile. Please try again.');
     </script>
 {% endif %}
 
-<!-- jQuery -->
-<script src="{% static 'assets/js/jquery-2.1.0.min.js' %}"></script>
-<script>
-    function togglePassword() {
-      var mobileInput = document.getElementById("mobile");
-      var eyeIcon = document.getElementById("mobile-eye");
-      if (mobileInput.type === "password") {
-        eyeIcon.classList.remove("fa-eye");
-        eyeIcon.classList.add("fa-eye-slash");
-        mobileInput.type = "text";
-      } else {
-        eyeIcon.classList.remove("fa-eye-slash");
-        eyeIcon.classList.add("fa-eye");
-        mobileInput.type = "password";
-      }
-    }
-
-
-    function togglePassword2() {
-      var emailInput = document.getElementById("email");
-      var eyeIcon = document.getElementById("email-eye");
-      if (emailInput.type === "password") {
-        eyeIcon.classList.remove("fa-eye");
-        eyeIcon.classList.add("fa-eye-slash");
-        emailInput.type = "text";
-      } else {
-        eyeIcon.classList.remove("fa-eye-slash");
-        eyeIcon.classList.add("fa-eye");
-        emailInput.type = "password";
-      }
-    }
-
-</script>
 {% endblock %}

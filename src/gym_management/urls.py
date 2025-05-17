@@ -72,6 +72,7 @@ urlpatterns = [
     path('plans/renew/<int:enroll_id>/', renew_plan, name='renew_plan'),
     path('invoice/<int:enroll_id>/', view_invoice, name='view_invoice'),
     path('member/viewattendance/', view_attendance, name='view_attendance'),
+    path('trainer/profile/<int:id>/',view_trainer_profile, name='trainer_profile'),
 
 
 

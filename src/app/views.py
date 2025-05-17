@@ -70,20 +70,50 @@ def user_logout(request):
     messages.success(request, "Logout Successfully")
     return redirect('index')
 
+
+
 def user_profile(request):
     if request.method == "POST":
-        fname = request.POST['firstname']
-        lname = request.POST['secondname']
-        email = request.POST['email']
-        mobile = request.POST['mobile']
-        address = request.POST['address']
-
-        user = User.objects.filter(id=request.user.id).update(first_name=fname, last_name=lname, email=email)
-        Signup.objects.filter(user=request.user).update(mobile=mobile, address=address)
-        messages.success(request, "Updation Successful")
+        # Get form data
+        fname = request.POST.get('firstname')
+        lname = request.POST.get('secondname')
+        email = request.POST.get('email')
+        mobile = request.POST.get('mobile')
+        address = request.POST.get('address')
+        
+        # Update User model
+        User.objects.filter(id=request.user.id).update(
+            first_name=fname,
+            last_name=lname,
+            
+        )
+        
+        # Get or create Signup instance
+        signup_instance = Signup.objects.get(user=request.user)
+        
+        # Update fields
+        signup_instance.mobile = mobile
+        signup_instance.address = address
+        
+        # Handle file upload
+        if 'profile_pic' in request.FILES:
+            
+            if signup_instance.profile_pic:
+                signup_instance.profile_pic.delete()
+            signup_instance.profile_pic = request.FILES['profile_pic']
+        
+        signup_instance.save()
+        
+        messages.success(request, "Profile updated successfully!")
         return redirect('user_profile')
-    data = Signup.objects.get(user=request.user)
-    return render(request, "user_profile.html", locals())
+    
+    try:
+        data = Signup.objects.get(user=request.user)
+    except Signup.DoesNotExist:
+        data = Signup.objects.create(user=request.user)
+    
+    return render(request, "user_profile.html", {'data': data})
+
 
 def user_change_password(request):
     if request.method=="POST":
@@ -786,6 +816,14 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from .models import Trainer
 
+
+
+def view_trainer_profile(request, id):  
+    print("here")
+    trainer = get_object_or_404(Trainer, id=id)
+    return render(request, 'Trainers/trainerprofilecard.html', {'trainer': trainer})
+
+
 @login_required
 def trainer_profile(request):
     try:
@@ -796,28 +834,51 @@ def trainer_profile(request):
     
     return render(request, 'Trainers/trainer_profile.html', {'trainer': trainer})
 
+
+
 @login_required
 def update_trainer_profile(request):
-    if request.method == 'POST':
-        trainer = Trainer.objects.get(user=request.user)
-        
-        # Update trainer fields
-        trainer.first_name = request.POST.get('first_name')
-        trainer.last_name = request.POST.get('last_name')
-        trainer.phone = request.POST.get('phone')
-        trainer.address = request.POST.get('address')
-        trainer.experience = request.POST.get('experience')
-        trainer.save()
-        
-        # Update user fields
-        user = request.user
-        user.first_name = request.POST.get('first_name')
-        user.last_name = request.POST.get('last_name')
-        user.save()
-        
-        messages.success(request, "Profile updated successfully")
+    # Ensure the user has a trainer profile
+    if not hasattr(request.user, 'trainer'):
+        messages.error(request, "You don't have a trainer profile.")
+        return redirect('home')  # Redirect to appropriate page
     
-    return redirect('trainer_profile')
+    trainer = request.user.trainer
+    
+    if request.method == 'POST':
+        # Update basic fields with proper fallbacks
+        trainer.first_name = request.POST.get('first_name', trainer.first_name)
+        trainer.last_name = request.POST.get('last_name', trainer.last_name)
+        trainer.phone = request.POST.get('phone', trainer.phone)
+        trainer.address = request.POST.get('address', trainer.address)
+        trainer.experience = request.POST.get('experience', trainer.experience)
+        trainer.profile_url = request.POST.get('profile_url', trainer.profile_url)
+        
+        # Handle status update - only allow valid choices
+        new_status = request.POST.get('status')
+        if new_status in dict(trainer.STATUS_CHOICES).keys():
+            trainer.status = new_status
+        else:
+            messages.warning(request, f"Invalid status selected. Keeping current status: {trainer.get_status_display()}")
+        
+        # Handle file upload
+        if 'profile_photo' in request.FILES:
+            # Optional: Add file validation here (size, type, etc.)
+            trainer.profile_photo = request.FILES['profile_photo']
+        
+        try:
+            trainer.save()
+            messages.success(request, 'Profile updated successfully!')
+        except Exception as e:
+            messages.error(request, f'Error updating profile: {str(e)}')
+        
+        return redirect('trainer_profile')
+    
+   
+    context = {
+        'trainer': trainer,
+    }
+    return render(request, 'trainer_profile.html', context)
 
 @login_required
 def trainer_change_password_page(request):
@@ -1225,15 +1286,15 @@ def member_classes(request):
     try:
         member_profile = get_object_or_404(Signup, user=request.user)
         enrolled_classes = Class.objects.filter(members=member_profile)
-        
+
         context = {
             'enrolled_classes': enrolled_classes,
             'member': member_profile
         }
         return render(request, 'memberclass.html', context)
-        
     except Exception as e:
         return render(request, 'memberclass.html', {'error': str(e)})
+
 
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
