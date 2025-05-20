@@ -20,10 +20,11 @@ class Trainer(models.Model):
     status = models.CharField(
         max_length=10,
         choices=STATUS_CHOICES,
-        default='active'
+        default='inactive'
     )
-    profile_url = models.URLField(max_length=200, blank=True, null=True)  # New field
-    profile_photo = models.ImageField(upload_to='trainer_photos/', blank=True, null=True)  # New field
+    profile_url = models.URLField(max_length=200, blank=True, null=True)  
+    profile_photo = models.ImageField(upload_to='trainer_photos/', blank=True, null=True)  
+    cv = models.FileField(upload_to='trainer_cvs/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     def get_absolute_url(self):
         return reverse('trainer_profile', args=[self.id])
@@ -157,3 +158,21 @@ class MemberAttendance(models.Model):
 
     def __str__(self):
         return f"{self.member.user.username} - {self.date} - {self.status}"
+    
+#feedback model
+class Feedback(models.Model):
+    SUBJECT_CHOICES = [
+        ('gym_management', 'Gym Management'),
+        ('trainer', 'Trainer'),
+        ('others', 'Others'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    subject = models.CharField(max_length=50, choices=SUBJECT_CHOICES)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} - {self.subject}"    

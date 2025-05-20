@@ -34,7 +34,7 @@ def registration(request):
 
         user = User.objects.create_user(first_name=fname, last_name=lname, email=email, password=pwd, username=email,is_active=0)
         Signup.objects.create(user=user, mobile=mobile,address=address)
-        messages.success(request, "Register Successful")
+        messages.success(request, "Member Register Successfully.Wait for the admin approvel mail!!")
         return redirect('user_login')
     return render(request, 'registration.html', locals())
 
@@ -174,11 +174,26 @@ def deleteCategory(request, pid):
 
 @login_required(login_url='/admin_login/')
 def reg_member(request):
-    data = Signup.objects.all()
-    print(data)
-    d = {'data': data}
-    return render(request, "admin/reg_member.html", locals())
+   
+    search_query = request.GET.get('search', '')
 
+    if search_query:
+        members = Signup.objects.filter(
+            Q(user__first_name__icontains=search_query) |
+            Q(user__last_name__icontains=search_query) |
+            Q(user__email__icontains=search_query)
+        )
+    else:
+        members = Signup.objects.all()
+
+    paginator = Paginator(members, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, "admin/reg_member.html", {
+        'data': page_obj,
+        'search_query': search_query
+    })
 
 @login_required(login_url='/admin_login/')
 def delete_user(request, pid):
@@ -295,29 +310,29 @@ from django.contrib import messages
 
 def admin_login(request):
     if request.method == 'POST':
-        # Get the username and password from the form
+       
         username = request.POST.get('uname')
         password = request.POST.get('pwd')
 
-        # Authenticate the user using the Django authentication system
+        
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
             # If the user exists and credentials are correct, log the user in
             login(request, user)
             messages.success(request, "Login successful! Welcome back!")
-            return redirect('admin_home')  # Redirect to the admin home page
+            return redirect('admin_home')  
         else:
-            # If authentication fails, show an error message
+            
             messages.error(request, "Invalid username or password.")
-            return redirect('adminlogin')  # Stay on the login page
+            return redirect('adminlogin')  
 
     return render(request, 'admin_login.html')
 
 
 @login_required
 def admin_home(request):
-    # This page is accessible only by logged-in users with the 'is_staff' flag
+   
     return render(request, 'admin/admin_home.html')
 
 
@@ -497,7 +512,6 @@ import hashlib
 import base64
 import hmac
 
-# Function to generate the signature for eSewa
 def generate_signature(amount, transaction_uuid, product_code, secret):
     hash_string = f"total_amount={amount},transaction_uuid={transaction_uuid},product_code={product_code}"
     secret_bytes = secret.encode('utf-8')
@@ -506,7 +520,7 @@ def generate_signature(amount, transaction_uuid, product_code, secret):
     digest = hmac_sha256.digest()
     signature = base64.b64encode(digest).decode('utf-8')
     return signature
-
+@login_required(login_url='/user_login/')
 def payment_view(request):
     if request.method == 'POST':
         amount = float(request.POST.get('amount'))
@@ -609,6 +623,9 @@ def payment_success(request):
         print(f"Error sending confirmation email: {e}")
     
     return render(request, 'payment/payment_success.html')
+
+def payment_failure(request):
+    return render(request, 'payment/payment_failure.html')
 
 def payment_failure(request):
     return render(request, 'payment/payment_failure.html')
@@ -749,13 +766,13 @@ def delete_user(request):
             return JsonResponse({"success": False, "error": str(e)})
 # views.py
 from django.shortcuts import render, redirect
-from .models import Trainer
-from django.http import JsonResponse
-
-from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.contrib import messages
+from django.contrib.auth.models import User
 from .models import Trainer, Signup  
+import os
+from django.conf import settings
+
 def trainer_registration(request):
     if request.method == "POST":
         fname = request.POST['first_name']
@@ -765,11 +782,34 @@ def trainer_registration(request):
         phone = request.POST['phone']
         address = request.POST['address']
         experience = request.POST.get('experience', '')
+        cv_file = request.FILES.get('cv')
 
         # Check if the username (email) already exists
         if User.objects.filter(username=email).exists():
-            messages.error(request, "This email is already registered. Please use a different email.")  # Use messages for error display
-            return render(request, 'trainer_reg.html', {'first_name': fname, 'last_name': lname, 'email': email, 'phone': phone, 'address': address, 'experience': experience}) # Re-render the form with the data entered, so the user doesn't have to re-enter everything.
+            messages.error(request, "This email is already registered. Please use a different email.")
+            return render(request, 'trainer_reg.html', {
+                'first_name': fname,
+                'last_name': lname,
+                'email': email,
+                'phone': phone,
+                'address': address,
+                'experience': experience
+            })
+
+        # Validate file type
+        if cv_file:
+            valid_extensions = ['.pdf', '.doc', '.docx']
+            ext = os.path.splitext(cv_file.name)[1].lower()
+            if ext not in valid_extensions:
+                messages.error(request, "Unsupported file format. Please upload PDF, DOC, or DOCX.")
+                return render(request, 'trainer_reg.html', {
+                    'first_name': fname,
+                    'last_name': lname,
+                    'email': email,
+                    'phone': phone,
+                    'address': address,
+                    'experience': experience
+                })
 
         try:
             user = User.objects.create_user(username=email, email=email, password=password)
@@ -782,18 +822,50 @@ def trainer_registration(request):
                 address=address,
                 experience=experience
             )
-            messages.success(request, "Trainer Registered Successfully")
+            
+            
+            if cv_file:
+                trainer.cv = cv_file
+                trainer.save()
+
+            messages.success(request, "Trainer Registered Successfully.You'll receive an approval email once verified by admin.")
             return redirect('trainer_login')
 
-        except Exception as e: # Catch any other potential errors during user creation
-            messages.error(request, f"Registration failed: {e}")  # Log the error for debugging
-            return render(request, 'trainer_reg.html', {'first_name': fname, 'last_name': lname, 'email': email, 'phone': phone, 'address': address, 'experience': experience}) # Re-render the form with the data entered
+        except Exception as e:
+            messages.error(request, f"Registration failed: {e}")
+            return render(request, 'trainer_reg.html', {
+                'first_name': fname,
+                'last_name': lname,
+                'email': email,
+                'phone': phone,
+                'address': address,
+                'experience': experience
+            })
 
-    return render(request, 'trainer_reg.html') # Render empty form for GET requests
+    return render(request, 'trainer_reg.html')
+from django.core.paginator import Paginator
 @login_required
 def reg_trainer(request):
-    trainers = Trainer.objects.all()  # Get all trainers
-    return render(request, 'admin/reg_trainer.html', {'trainers': trainers})
+    search_query = request.GET.get('search', '')
+
+    if search_query:
+        trainers = Trainer.objects.filter(
+            Q(first_name__icontains=search_query) |
+            Q(last_name__icontains=search_query) |
+            Q(email__icontains=search_query)
+        )
+    else:
+        trainers = Trainer.objects.all()  
+
+    paginator = Paginator(trainers, 10)  # 10 trainers per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'admin/reg_trainer.html', {
+        'trainers': page_obj,
+        'search_query': search_query
+    })
+
 from django.views.decorators.http import require_POST
 @require_POST
 @login_required
@@ -1063,50 +1135,53 @@ def member_attendance(request):
     return render(request, 'admin/member_attendance.html', context)
 
 from django.contrib import messages
-from django.shortcuts import redirect, get_object_or_404
-from .models import  MemberAttendance
-import datetime
+from django.shortcuts import redirect, get_object_or_404, render
+from django.utils import timezone
+from django.utils.timezone import localtime
+from django.db.models import Q
+from datetime import  timedelta, time as dtime
+from .models import MemberAttendance, Signup, Enroll
 
 def mark_attendance(request, member_id, status):
     if request.method == 'POST':
-        # Validate status
         valid_statuses = ['Present', 'Absent']
         status = status.capitalize()
-        
+
         if status not in valid_statuses:
             messages.error(request, "Invalid attendance status.")
             return redirect('member_attendance')
 
         member = get_object_or_404(Signup, id=member_id)
-        now = datetime.datetime.now()
-        date = now.date()
-        time = now.time()
+        now = localtime()
+        today = now.date()
 
-        # Check if member has an active plan
+        if not is_within_attendance_window():
+            messages.error(request, "Attendance can only be marked between 6:00 AM and 9:00 PM.")
+            return redirect('member_attendance')
+
+        # Check active plan
         active_plan = False
-        today = date
-        
-        for enrollment in member.enroll_set.all():  # Assuming related_name='enroll_set'
-            duration_days = parse_duration(enrollment.package.packageduration).days
+        for enrollment in member.enroll_set.all():
+            duration_days = parse_duration(enrollment.package.packageduration)
             expiry_date = enrollment.creationdate.date() + timedelta(days=duration_days)
-            
-            if expiry_date >= today and enrollment.status == 1:  # status == 1 means Paid
+            if expiry_date >= today and enrollment.status == 1:
                 active_plan = True
                 break
-        
+
         if not active_plan:
             messages.error(request, f"{member.user.get_full_name()} doesn't have an active paid plan.")
             return redirect('member_attendance')
 
-        # Check for existing entry
-        if MemberAttendance.objects.filter(member=member, date=date).exists():
+        # Prevent duplicate attendance
+        if MemberAttendance.objects.filter(member=member, date=today).exists():
             messages.warning(request, f"{member.user.get_full_name()} is already marked today.")
-            return redirect('member_attendance')  
+            return redirect('member_attendance')
 
+        # Mark attendance
         MemberAttendance.objects.create(
             member=member,
-            date=date,
-            time=time,
+            date=today,
+            time=now.time(),
             status=status
         )
         messages.success(request, f"{member.user.get_full_name()} marked as {status}.")
@@ -1115,22 +1190,27 @@ def mark_attendance(request, member_id, status):
     messages.error(request, "Invalid request method.")
     return redirect('member_attendance')
 
+
+
 def qr_attendance(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         try:
             member = Signup.objects.get(user__username=username)
-            today = timezone.now().date()
+            now = localtime()
+            today = now.date()
 
-            # Check for at least one active and paid enrollment
+            if not is_within_attendance_window():
+                messages.error(request, "Attendance can only be marked between 6:00 AM and 9:00 PM.")
+                return redirect('qr_attendance')
+
+            # Validate plan
             enrollments = Enroll.objects.filter(register=member)
             has_valid_plan = False
-
             for enroll in enrollments:
-                duration_days = parse_duration(enroll.package.packageduration).days
+                duration_days = parse_duration(enroll.package.packageduration)
                 expiry_date = enroll.creationdate.date() + timedelta(days=duration_days)
-
-                if expiry_date >= today and enroll.status == 1:  # status == 1 means Paid
+                if expiry_date >= today and enroll.status == 1:
                     has_valid_plan = True
                     break
 
@@ -1138,14 +1218,18 @@ def qr_attendance(request):
                 messages.error(request, f"{username} does not have an active and paid plan. Attendance not marked.")
                 return redirect('qr_attendance')
 
+            # Prevent duplicate
+            if MemberAttendance.objects.filter(member=member, date=today).exists():
+                messages.warning(request, f"{username} is already marked today.")
+                return redirect('qr_attendance')
+
             # Mark attendance
             MemberAttendance.objects.create(
                 member=member,
                 date=today,
-                time=timezone.now().time(),
+                time=now.time(),
                 status="Present"
             )
-
             messages.success(request, f"Attendance marked Present for {username}!")
             return redirect('qr_attendance')
 
@@ -1155,9 +1239,7 @@ def qr_attendance(request):
 
     return render(request, 'qr_attendance.html')
 
-from django.shortcuts import render
-from .models import MemberAttendance
-from django.db.models import Q
+
 
 def attendance_report(request):
     query = request.GET.get('q')
@@ -1174,6 +1256,45 @@ def attendance_report(request):
         'member_attendance': member_attendance,
         'query': query
     })
+
+
+
+from datetime import time as dtime
+
+def auto_mark_absent():
+    now = localtime()
+    current_time = now.time()
+    start = dtime(6, 0)
+    end = dtime(21, 0)
+
+    if start <= current_time <= end:
+        print("Still within attendance window, skipping absent marking.")
+        return
+
+    today = now.date()
+    all_members = Signup.objects.all()
+
+    for member in all_members:
+        already_marked = MemberAttendance.objects.filter(member=member, date=today).exists()
+        if already_marked:
+            continue
+
+        enrollments = Enroll.objects.filter(register=member)
+        has_valid_plan = False
+        for enroll in enrollments:
+            duration_days = parse_duration(enroll.package.packageduration)
+            expiry_date = enroll.creationdate.date() + timedelta(days=duration_days)
+            if expiry_date >= today and enroll.status == 1:
+                has_valid_plan = True
+                break
+
+        if has_valid_plan:
+            MemberAttendance.objects.create(
+                member=member,
+                date=today,
+                time=now.time(),
+                status="Absent"
+            )
 
 
 from django.shortcuts import render, redirect
@@ -1373,25 +1494,128 @@ from django.shortcuts import redirect
 from django.contrib import messages
 from .models import Enroll, Package
 
+@login_required
 def renew_plan(request, enroll_id):
     try:
         old_enroll = Enroll.objects.get(id=enroll_id, register__user=request.user)
-        
-        # Create new enrollment with same package
-        new_enroll = Enroll.objects.create(
-            package=old_enroll.package,
-            register=old_enroll.register,
-            status=1,  # Set as unpaid initially
-            # Other fields...
-        )
-        
-        # Redirect to payment page
-        messages.success(request, "Plan renewed successfully! Please complete the payment.")
-        return redirect('payment_form', enroll_id=new_enroll.id)
-        
+
+        if old_enroll.status == 1:  
+            messages.warning(request, "Your current plan is already active. You cannot renew it now.")
+            return redirect('enrolled_plans')  
+
+        # Otherwise, proceed with renewal payment flow
+        request.session['renew_enroll_id'] = old_enroll.id
+        request.session['renew_package_id'] = old_enroll.package.id
+
+        messages.success(request, "Please complete the payment to renew your plan.")
+        return redirect('renew_payment_view')
+
+    except Enroll.DoesNotExist:
+        messages.error(request, "Enrollment not found.")
+        return redirect('enrolled_plans')
+
     except Exception as e:
-        messages.error(request, f"Error renewing plan: {str(e)}")
-        return redirect('enrolled_plans')  
+        messages.error(request, f"Error: {e}")
+        return redirect('enrolled_plans')
+
+@login_required
+def renew_payment_view(request):
+    if request.method == 'POST':
+        amount = float(request.POST.get('amount'))
+        full_name = request.POST.get('full_name')
+        phone_number = request.POST.get('phone_number')
+
+        transaction_uuid = str(uuid.uuid4())
+        secret = settings.ESEWA_SECRET_KEY
+
+        total_amount = amount
+        signature = generate_signature(total_amount, transaction_uuid, "RENEWPLAN", secret)
+
+        renew_enroll_id = request.session.get('renew_enroll_id')
+        old_enroll = Enroll.objects.get(id=renew_enroll_id)
+
+        # Save payment intent (no enrollment yet)
+        payment = Payment.objects.create(
+            user=request.user,
+            enroll=old_enroll,  # refer to old enrollment
+            transaction_uuid=transaction_uuid,
+            amount=total_amount,
+            signature=signature,
+            success_url=request.build_absolute_uri(reverse('renew_payment_success')),
+            failure_url=request.build_absolute_uri(reverse('payment_failure')),
+        )
+
+        context = {
+            'amount': payment.amount,
+            'transaction_uuid': payment.transaction_uuid,
+            'signature': payment.signature,
+            'success_url': payment.success_url,
+            'failure_url': payment.failure_url,
+            'signed_field_names': "total_amount,transaction_uuid,product_code",
+            'full_name': full_name,
+            'phone_number': phone_number,
+        }
+
+        return render(request, 'payment/payment_form.html', context)
+
+    return render(request, 'payment/payment_form.html')
+@login_required
+def renew_payment_success(request):
+    try:
+        payment = Payment.objects.filter(user=request.user).latest('creationdate')
+        old_enroll = payment.enroll
+        package = old_enroll.package
+
+        # Create new enrollment for the renewed plan
+        new_enroll = Enroll.objects.create(
+            package=package,
+            register=old_enroll.register,
+            enrollnumber=random_with_N_digits(10),
+            status=1  # active
+        )
+
+        #  Mark payment as successful
+        payment.status = 1
+        payment.save()
+
+        # Log to PaymentHistory if needed
+        Paymenthistory.objects.create(
+            user=old_enroll.register,
+            enroll=new_enroll,
+            price=payment.amount,
+            status=1,
+        )
+
+       
+        subject = f'Renewal Payment Success: {package.titlename}'
+        context = {
+            'member_name': f"{request.user.first_name} {request.user.last_name}",
+            'package_name': package.titlename,
+            'amount': payment.amount,
+            'transaction_date': payment.creationdate.strftime("%B %d, %Y %H:%M"),
+        }
+        html_message = render_to_string('renewalpaid_email.html', context)
+        plain_message = strip_tags(html_message)
+
+        send_mail(
+            subject=subject,
+            message=plain_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[request.user.email],
+            html_message=html_message,
+            fail_silently=False,
+        )
+
+       
+        request.session.pop('renew_enroll_id', None)
+
+        messages.success(request, "Your plan has been successfully renewed.")
+        return redirect('enrolled_plans')
+
+    except Exception as e:
+        messages.error(request, f"Payment succeeded but renewal failed: {e}")
+        return redirect('enrolled_plans')
+
     
 from django.shortcuts import render, get_object_or_404
 from django.contrib import messages
@@ -1443,4 +1667,34 @@ def view_attendance(request):
         'total_attendance': total_attendance,
     }
     return render(request, 'Memberview_attendance.html', context)
+from django.contrib.auth.decorators import login_required, user_passes_test
+from .models import Feedback
+@login_required
+def contact_form(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        subject = request.POST.get('subject')
+        message = request.POST.get('message')
+
+        if name and email and subject and message:
+            Feedback.objects.create(
+                user=request.user,
+                name=name,
+                email=email,
+                subject=subject,
+                message=message
+            )
+            messages.success(request, 'Feedback submitted successfully.')
+        else:
+            messages.error(request, 'Please fill in all fields.')
+
+        return redirect('index')    
+
+    
+@user_passes_test(lambda u: u.is_staff)
+def admin_feedback_view(request):
+    feedbacks = Feedback.objects.all().order_by('-created_at')
+    return render(request, 'admin/feedback_list.html', {'feedbacks': feedbacks})
+
 

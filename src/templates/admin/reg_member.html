@@ -32,6 +32,22 @@
     font-weight: bold;
     text-transform: uppercase;
   }
+  .search-container {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .search-box {
+    padding: 8px 15px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    width: 300px;
+  }
+  .action-buttons {
+    display: flex;
+    gap: 10px;
+  }
   .table tbody tr:nth-child(odd) {
     background-color: #f9f9f9;
   }
@@ -205,6 +221,15 @@
                                 <div class="card-header">
                                     <h5> Registered Members</h5>
                                 </div>
+                                <div class="search-container">
+                                        <form method="GET" action="">
+                                            <input type="text" name="search" class="search-box" placeholder="Search by name or email" value="{{ request.GET.search }}">
+                                            <button type="submit" class="btn btn-primary">Search</button>
+                                            {% if request.GET.search %}
+                                                <a href="?" class="btn btn-secondary">Clear</a>
+                                            {% endif %}
+                                        </form>
+                                    </div>
                                 <div class="card-block table-border-style">
                                     <div class="table-responsive">
                                         <table class="table">

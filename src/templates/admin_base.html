@@ -32,11 +32,7 @@
             color: inherit;
             padding: 0.75rem 1rem;
         }
-        .btn-close {
-            filter: brightness(0) invert(1);
-            opacity: 1;
-            background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e") center/1em auto no-repeat;
-        }
+        
         .toast-warning .btn-close {
             filter: none;
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23212529'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e");
@@ -83,13 +79,14 @@
 
 <body>
  <!-- Toast Notifications -->
-<div class="toast-container">
+
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100">
     {% for message in messages %}
-    <div class="toast toast-{{ message.tags }}" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast toast-{{ message.tags }}" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
         <div class="toast-header">
             <strong class="me-auto">
                 <i class="fa {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% elif message.tags == 'warning' %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %} me-2"></i>
-                
+                {% if message.tags == 'success' %}Success{% elif message.tags == 'error' %}Error{% elif message.tags == 'warning' %}Warning{% else %}Info{% endif %}
             </strong>
             <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
@@ -436,6 +433,23 @@
                                 <a href="javascript:void(0)" class="waves-effect waves-dark">
                                     <span class="pcoded-micon"><i class="ti-layers"></i></span>
                                     <span class="pcoded-mtext"
+                                          data-i18n="nav.basic-components.main">View Feedback</span>
+                                    <span class="pcoded-mcaret"></span>
+                                </a>
+                                <ul class="pcoded-submenu">
+                                    <li class=" ">
+                                        <a href="{% url 'admin_feedback' %}" class="waves-effect waves-dark">
+                                            <span class="pcoded-micon"><i class="ti-angle-right"></i></span>
+                                            <span class="pcoded-mtext"
+                                                  data-i18n="nav.basic-components.alert">Feedback list</span>
+                                            <span class="pcoded-mcaret"></span>
+                                        </a>
+                                    </li>
+                                </ul>    
+                            <li class="pcoded-hasmenu">
+                                <a href="javascript:void(0)" class="waves-effect waves-dark">
+                                    <span class="pcoded-micon"><i class="ti-layers"></i></span>
+                                    <span class="pcoded-mtext"
                                           data-i18n="nav.basic-components.main">Reports</span>
                                     <span class="pcoded-mcaret"></span>
                                 </a>
@@ -560,35 +574,30 @@
 <script type="text/javascript" src="{% static 'assets1/js/script.js' %}"></script>
 </body>
 <script>
-    // Initialize toast notifications with 5-second auto-hide
-    document.addEventListener("DOMContentLoaded", function() {
-        // Initialize Bootstrap toasts
-        var toastElList = [].slice.call(document.querySelectorAll('.toast'));
-        var toastOptions = {
-            delay: 5000, // 5 seconds
-            autohide: true // Ensure auto-hide is enabled
-        };
-        
-        toastElList.forEach(function(toastEl) {
-            // Create toast instance
-            var toast = new bootstrap.Toast(toastEl, toastOptions);
-            
-            // Show toast
-            toast.show();
-            
-            // Remove from DOM after hiding
-            toastEl.addEventListener('hidden.bs.toast', function() {
-                toastEl.remove();
-            });
-            
-            // Ensure close button works
-            var closeButton = toastEl.querySelector('.btn-close');
-            if (closeButton) {
-                closeButton.addEventListener('click', function() {
-                    toast.hide();
-                });
-            }
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all toasts
+    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+    var toastList = toastElList.map(function(toastEl) {
+        // Create toast instance
+        var toast = new bootstrap.Toast(toastEl, {
+            autohide: true,
+            delay: 5000 // 5 seconds
+        });
+        // Show toast
+        toast.show();
+        return toast;
+    });
+    
+    // Also handle close button clicks
+    var closeButtons = [].slice.call(document.querySelectorAll('.btn-close'));
+    closeButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+            var toastEl = this.closest('.toast');
+            var toast = bootstrap.Toast.getInstance(toastEl);
+            toast.hide();
         });
     });
+});
 </script>
+
 </html>

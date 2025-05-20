@@ -73,6 +73,12 @@ urlpatterns = [
     path('invoice/<int:enroll_id>/', view_invoice, name='view_invoice'),
     path('member/viewattendance/', view_attendance, name='view_attendance'),
     path('trainer/profile/<int:id>/',view_trainer_profile, name='trainer_profile'),
+    path('renew-plan/<int:enroll_id>/', renew_plan, name='renew_plan'),
+    path('renew-payment/', renew_payment_view, name='renew_payment_view'),
+    path('renew-payment-success/', renew_payment_success, name='renew_payment_success'),
+    path('payment-failure/', payment_failure, name='payment_failure'),
+    path('contact/', contact_form, name='contact_form'),
+    path('admin-feedback/', admin_feedback_view, name='admin_feedback'),
 
 
 
