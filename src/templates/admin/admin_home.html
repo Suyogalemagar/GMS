@@ -39,7 +39,7 @@
                             <div class="card-block">
                                 <div class="row align-items-center">
                                     <div class="col-12">
-                                        <h4 class="text-c-purple">{{totalcategory}}</h4>
+                                        <h4 class="text-c-purple">{{ total_categories }}</h4>
                                         <h6 class="text-muted m-b-0">Total Category</h6>
                                     </div>
                                 </div>
@@ -59,7 +59,7 @@
                             <div class="card-block">
                                 <div class="row align-items-center">
                                     <div class="col-12">
-                                        <h4 class="text-c-green">{{totalpackagetype}}</h4>
+                                        <h4 class="text-c-green">{{total_package_type}}</h4>
                                         <h6 class="text-muted m-b-0">Total Package Type</h6>
                                     </div>
                                 </div>
@@ -79,7 +79,7 @@
                             <div class="card-block">
                                 <div class="row align-items-center">
                                     <div class="col-12">
-                                        <h4 class="text-c-red">{{totalpackage}}</h4>
+                                        <h4 class="text-c-red">{{total_packages}}</h4>
                                         <h6 class="text-muted m-b-0">Total Packages</h6>
                                     </div>
                                 </div>
@@ -99,7 +99,7 @@
                             <div class="card-block">
                                 <div class="row align-items-center">
                                     <div class="col-12">
-                                        <h4 class="text-c-blue">{{totalbooking}}</h4>
+                                        <h4 class="text-c-blue">{{total_enrolled_plans}}</h4>
                                         <h6 class="text-muted m-b-0">Total Enrolled plan</h6>
                                     </div>
                                 </div>
@@ -113,21 +113,20 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="col-xl-3 col-md-6">
                         <div class="card">
                             <div class="card-block">
                                 <div class="row align-items-center">
                                     <div class="col-12">
-                                        <h4 class="text-c-purple">{{New.count}}</h4>
-                                        <h6 class="text-muted m-b-0">New Enrolled</h6>
+                                        <h4 class="text-c-blue">{{total_renew}}</h4>
+                                        <h6 class="text-muted m-b-0">Total Renew</h6>
                                     </div>
                                 </div>
                             </div>
-                            <div class="card-footer bg-c-purple">
+                            <div class="card-footer bg-c-blue">
                                 <div class="row align-items-center">
                                     <div class="col-9">
-                                        <a class="text-white m-b-0" href="/new_enrolled/?action=New">View Details</a>
+                                        <a class="text-white m-b-0" href="/new_enrolled/?action=Total">View Details</a>
                                     </div>
                                 </div>
                             </div>
@@ -135,12 +134,13 @@
                     </div>
 
                     
+                    
                     <div class="col-xl-3 col-md-6">
                         <div class="card">
                             <div class="card-block">
                                 <div class="row align-items-center">
                                     <div class="col-12">
-                                        <h4 class="text-c-red">{{Full.count}}</h4>
+                                        <h4 class="text-c-red">{{total_full_payment}}</h4>
                                         <h6 class="text-muted m-b-0">Full Payment</h6>
                                     </div>
                                 </div>

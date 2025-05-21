@@ -4,9 +4,7 @@
 {% block main_content %}
 <!-- ***** Main Banner Area Start ***** -->
 <div class="main-banner" id="top">
-<!--    <video autoplay muted loop id="bg-video">-->
-<!--        <source src="{% static 'assets/images/gym-video.mp4' %}" type="video/mp4"/>-->
-<!--    </video>-->
+
 
     <img src="{% static 'assets/images/gymimg.jpg' %}" id="bg-video">
 
@@ -36,19 +34,33 @@
         </div>
 
         <div class="row" >
-            {% for i in package %}
-    <div class="col-lg-4"><br>
-        <div class="trainer-item">
-            <div class="down-content">
-                <span>{{i.titlename}}</span>
-                <h4>{{i.price}}</h4>
-                <h4>{{i.packageduration}}</h4>
-                <p>{{i.description|safe}}</p>
-                <form method="post" action="/apply-enrolled/{{i.id}}/">
-                   {% csrf_token %}
-                    <button type="submit" class="btn btn-danger px-3">Enrolled Now</button>
-                </form>
+            {% for category, packages in grouped_packages.items %}
+    <div class="container-fluid my-4">
+        <div class="row">
+            <div class="col-12">
+                <h2 class="text-center">{{ category }}</h2>
+                <hr>
             </div>
+        </div>
+
+        <!-- Packages row -->
+        <div class="row">
+            {% for i in packages %}
+                <div class="col-lg-4 mb-4">
+                    <div class="trainer-item">
+                        <div class="down-content">
+                            <span>{{ i.titlename }}</span>
+                            <h4>{{ i.price }}</h4>
+                            <h4>{{ i.packageduration }}</h4>
+                            <p>{{ i.description|safe }}</p>
+                            <form method="post" action="/apply-enrolled/{{ i.id }}/">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger px-3">Enrolled Now</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
         </div>
     </div>
 {% endfor %}

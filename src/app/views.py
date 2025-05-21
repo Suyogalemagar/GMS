@@ -1,3 +1,4 @@
+from collections import defaultdict
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render,redirect,get_object_or_404
@@ -20,8 +21,12 @@ def index(request):
             else:
                 messages.success(request, "Invalid Credentials, Please try again")
                 return redirect('index')
-    package = Package.objects.filter().order_by('id')[:5]
-    return render(request, 'index.html', locals())
+    packages = Package.objects.filter().order_by('id')
+    grouped_packages = defaultdict(list)
+    for package in packages:
+        grouped_packages[package.category].append(package)
+    print(grouped_packages.items)
+    return render(request, 'index.html', {'grouped_packages': dict(grouped_packages)})
 
 def registration(request):
     if request.method == "POST":
@@ -332,8 +337,22 @@ def admin_login(request):
 
 @login_required
 def admin_home(request):
-   
-    return render(request, 'admin/admin_home.html')
+    total_categories = Category.objects.count()
+    total_packages = Package.objects.count()
+    total_enrolled_plans = Enroll.objects.count()
+    total_package_type =Packagetype.objects.count()
+    total_full_payment=Payment.objects.count()
+    total_renew=Enroll.objects.filter(status=0).count()
+    context = {
+        'total_categories': total_categories,
+        'total_packages': total_packages,
+        'total_enrolled_plans': total_enrolled_plans,
+        'total_package_type':total_package_type,
+        'total_full_payment':total_full_payment,
+        'total_renew':total_renew
+    }
+
+    return render(request, 'admin/admin_home.html', context)
 
 
 @login_required(login_url='/user_login/')
@@ -459,48 +478,34 @@ def random_with_N_digits(n):
     range_end = (10**n)-1
     return randint(range_start, range_end)
 
-# @login_required(login_url='/user_login/')
-# def Enroll(request):
-#     Enroll = None
-#     enrolleded = Enroll.objects.filter(register__user=request.user)
-#     enrolleded_list = [i.policy.id for i in enrolleded]
-#     data = Package.objects.filter().exclude(id__in=enrolleded_list)
-#     if request.method == "POST":
-#         Enroll = Package.objects.filter()
-#         Enroll = enrolledForm(request.POST, request.FILES, instance=Enroll)
-#         if Enroll.is_valid():
-#             Enroll = Enroll.save()
-#             Enroll.enrollednumber = random_with_N_digits(10)
-#             data.Enroll = Enroll
-#             data.save()
-#         Enroll.objects.create(package=Enroll)
-#         messages.success(request, "Action Updated")
-#         return redirect('Enroll')
-#     return render(request, "/", locals())
 
 @login_required(login_url='/user_login/')
 def apply_enrolled(request, pid):
     package = get_object_or_404(Package, id=pid)
     register = get_object_or_404(Signup, user=request.user)
 
-    enrollment = Enroll.objects.create(
-        package=package,
+    # Check if user is already enrolled in this package
+    already_enrolled = Enroll.objects.filter(
         register=register,
-        enrollnumber=random_with_N_digits(10)
-    )
+        package=package,
+    ).exists()
 
-    messages.success(request, 'Enroll Applied')
-    
-    payment_url = reverse('payment_view')
+    if already_enrolled:
+        print("already")
+        messages.error(request, "You are already enrolled in this package.")
+        return redirect('index') 
+
+    # Save info temporarily for payment process
+    request.session['pending_package_id'] = package.id
+    request.session['pending_register_id'] = register.id
 
     context = {
-      'action_url': payment_url,
-        'enrolled_id': enrollment.id,
+        'action_url': reverse('payment_view'),
         'amount': package.price,
     }
 
-    # Return an HttpResponse with a hidden form for POST redirect
     return render(request, 'hidden_post_form.html', context)
+
 from django.shortcuts import render, redirect
 from django.http import HttpResponseBadRequest, JsonResponse
 from django.urls import reverse
@@ -526,7 +531,13 @@ def payment_view(request):
         amount = float(request.POST.get('amount'))
         full_name = request.POST.get('full_name')
         phone_number = request.POST.get('phone_number')
-        enrolled_id = request.POST.get("enrolled_id")
+
+        package_id = request.session.get('pending_package_id')
+        register_id = request.session.get('pending_register_id')
+
+        if not package_id or not register_id:
+            messages.error(request, 'Session expired. Please try again.')
+            return redirect('home')  # or enrollment page
 
         transaction_uuid = str(uuid.uuid4())
         secret = settings.ESEWA_SECRET_KEY
@@ -538,13 +549,10 @@ def payment_view(request):
 
         signature = generate_signature(total_amount, transaction_uuid, "EPAYTEST", secret)
 
-        user = request.user
-        enrollment = Enroll.objects.get(id=enrolled_id)
-
-        # Save to Payment model
+        # Save temporary payment record without Enroll
         payment = Payment.objects.create(
-            user=user,
-            enroll=enrollment,
+            user=request.user,
+            enroll=None,  # Will be linked after success
             transaction_uuid=transaction_uuid,
             amount=total_amount,
             signature=signature,
@@ -552,16 +560,7 @@ def payment_view(request):
             failure_url=request.build_absolute_uri(reverse('payment_failure')),
         )
 
-        # Save to Paymenthistory model
-        signup_user = Signup.objects.get(user=user)
-        Paymenthistory.objects.create(
-            user=signup_user,
-            enroll=enrollment,
-            price=total_amount,
-            status=1  # Assuming 1 = Paid
-        )
-
-        # Data to send to eSewa
+        # Pass this info to eSewa
         esewa_data = {
             'amount': payment.amount,
             'tax_amount': tax_amount,
@@ -582,28 +581,77 @@ def payment_view(request):
 
     return render(request, 'payment/payment_form.html')
 
+
+from django.db import transaction
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from django.conf import settings
+from django.shortcuts import render, redirect, get_object_or_404
+
 def payment_success(request):
-    # Get the latest payment for the current user
     try:
+        # Get the latest payment for the current user
         payment = Payment.objects.filter(user=request.user).latest('creationdate')
+
+        # If enrollment linked to payment, use it
         enrollment = payment.enroll
-        package = enrollment.package
-        
+
+        # If enrollment not linked yet, create it now using session info
+        if not enrollment:
+            package_id = request.session.pop('pending_package_id', None)
+            register_id = request.session.pop('pending_register_id', None)
+
+            if not package_id or not register_id:
+                # Missing session data — can't create enrollment
+                return render(request, 'payment/payment_success.html', {
+                    'error_message': 'Session expired or invalid. Enrollment cannot be created.'
+                })
+
+            package = get_object_or_404(Package, id=package_id)
+            register = get_object_or_404(Signup, id=register_id)
+
+            with transaction.atomic():
+                enrollment = Enroll.objects.create(
+                    package=package,
+                    register=register,
+                    enrollnumber=random_with_N_digits(10)
+                )
+                # Link the enrollment to payment
+                payment.enroll = enrollment
+                payment.status = 1  # Mark payment as Paid
+                payment.save()
+
+                # Also create Paymenthistory
+                Paymenthistory.objects.create(
+                    user=register,
+                    enroll=enrollment,
+                    price=payment.amount,
+                    status=1
+                )
+        else:
+            package = enrollment.package
+
+            # Ensure payment status is updated if not done yet
+            if payment.status != 1:
+                payment.status = 1
+                payment.save()
+
         # Prepare email content
         subject = f'Payment Confirmation for {package.titlename}'
-        
+
         context = {
             'member_name': f"{request.user.first_name} {request.user.last_name}",
             'package_name': package.titlename,
             'amount': payment.amount,
             'transaction_date': payment.creationdate.strftime("%B %d, %Y %H:%M"),
-            'expiry_date': enrollment.expiry_date.strftime("%B %d, %Y") if hasattr(enrollment, 'expiry_date') else "N/A",
+            'expiry_date': enrollment.expiry_date.strftime("%B %d, %Y") if hasattr(enrollment, 'expiry_date') and enrollment.expiry_date else "N/A",
         }
-        
+
         # Render HTML content
         html_message = render_to_string('paymentsuccessemail.html', context)
         plain_message = strip_tags(html_message)
-        
+
         # Send email
         send_mail(
             subject=subject,
@@ -613,16 +661,19 @@ def payment_success(request):
             html_message=html_message,
             fail_silently=False,
         )
-        
-        # Update payment status if needed
-        payment.status = 1  # Paid
-        payment.save()
-        
+
+    except Payment.DoesNotExist:
+        return render(request, 'payment/payment_success.html', {
+            'error_message': 'No payment record found.'
+        })
     except Exception as e:
-        # Log error but don't show to user
-        print(f"Error sending confirmation email: {e}")
-    
+        print(f"Error during payment success handling: {e}")
+        return render(request, 'payment/payment_success.html', {
+            'error_message': 'An error occurred while processing your payment.'
+        })
+
     return render(request, 'payment/payment_success.html')
+
 
 def payment_failure(request):
     return render(request, 'payment/payment_failure.html')
@@ -1114,6 +1165,7 @@ def trainer_dashboard(request):
 
     # Fetch all classes assigned to this trainer
     classes = Class.objects.filter(trainer_id=trainer.pk)
+    
     print(classes)
     return render(request, 'Trainers/trainer_page.html', {'trainer': trainer, 'classes': classes})
 
@@ -1155,9 +1207,7 @@ def mark_attendance(request, member_id, status):
         now = localtime()
         today = now.date()
 
-        if not is_within_attendance_window():
-            messages.error(request, "Attendance can only be marked between 6:00 AM and 9:00 PM.")
-            return redirect('member_attendance')
+        
 
         # Check active plan
         active_plan = False
@@ -1200,9 +1250,7 @@ def qr_attendance(request):
             now = localtime()
             today = now.date()
 
-            if not is_within_attendance_window():
-                messages.error(request, "Attendance can only be marked between 6:00 AM and 9:00 PM.")
-                return redirect('qr_attendance')
+            
 
             # Validate plan
             enrollments = Enroll.objects.filter(register=member)

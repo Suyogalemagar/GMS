@@ -194,7 +194,11 @@
                             <div class="class-info">
                                 <i class="fas fa-user-friends"></i>
                                 <span><strong>Members Enrolled:</strong> {{ class.members.count }}</span>
+                                
                             </div>
+                            {%for i in class.members.all%}
+                                <div>{{i.user.first_name}}<div>
+                            {%endfor%}
                         </div>
                     {% endfor %}
                 </div>
